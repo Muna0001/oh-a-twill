@@ -1,6 +1,6 @@
 # Oh a Twill — weaving app build plan: web first, then iOS and Android
 
-Status: **plan only, nothing built.** One codebase, three targets, released in this order: **1. web app, 2. iOS, 3. Android.** This document is written to be handed to subagents. Each work package (WP) in section 8 is a self-contained brief; sections 1–7 are the shared context every agent needs.
+Status: **build in progress.** One codebase, three targets, released in this order: **1. web app, 2. iOS, 3. Android.** This document is written to be handed to subagents. Each work package (WP) in section 8 is a self-contained brief; sections 1–7 are the shared context every agent needs.
 
 Working title is "Oh a Twill" (from the repo name). See open decisions in section 11.
 
@@ -50,7 +50,7 @@ Custom pattern editor, yarn amount estimates, printable pattern sheets, non-grid
 | Font | **Familjen Grotesk** 400/500/600/700, bundled (via `@expo-google-fonts/familjen-grotesk` if it exists, otherwise the OFL TTFs in `assets/fonts/`). System font as fallback. | Matches the web app. |
 | Layout | One phone-first column, max width 720 px and centred on wide screens, light and dark. Phones are portrait only; `supportsTablet: false`. | Keep v1 small. |
 
-Pin the Expo SDK to the latest stable release at scaffold time and record it in `CLAUDE.md`. Install Expo-managed packages with `npx expo install` so versions match the SDK.
+The Expo SDK is pinned at 58 (see `CLAUDE.md`). Install Expo-managed packages with `npx expo install` so versions match the SDK.
 
 ---
 
@@ -60,9 +60,9 @@ Pin the Expo SDK to the latest stable release at scaffold time and record it in 
 
 ```
 Tabs
-├── Stitches            app/(tabs)/index.tsx        library grid, search, category filter, favourites
-├── Projects            app/(tabs)/projects.tsx     in-progress and finished weavings, "New from picture"
-└── Settings            app/(tabs)/settings.tsx     default warps, default start edge, haptics, keep awake, theme, about
+├── Stitches            src/app/(tabs)/index.tsx        library grid, search, category filter, favourites
+├── Projects            src/app/(tabs)/projects.tsx     in-progress and finished weavings, "New from picture"
+└── Settings            src/app/(tabs)/settings.tsx     default warps, default start edge, haptics, keep awake, theme, about
 
 Stack (pushed over tabs)
 ├── stitch/[id]         stitch detail
@@ -135,7 +135,7 @@ List rows: thumbnail (stitch preview or picture), name, "Row 37 · 24 warps", la
 
 ### 3.8 Copy and tone
 
-Reuse the web app's strings verbatim wherever a screen is ported. Sentence case, plain language, typographic quotes (’). All user-facing strings live in `src/copy.ts` so they can be reviewed in one place.
+Reuse the web app's strings verbatim wherever a screen is ported. Sentence case, plain language, typographic quotes (’). User-facing strings live in a `copy.ts` in the folder that uses them, so they can be reviewed without reading components.
 
 ---
 
@@ -146,7 +146,7 @@ Reuse the web app's strings verbatim wherever a screen is ported. Sentence case,
 Each path has exactly one owning WP. Agents must not edit files outside their paths; if a change is needed elsewhere, report it to the orchestrator.
 
 ```
-app/                          Expo Router routes (thin: compose feature screens)      WP0 creates shells; WP8–WP11 fill their own routes
+src/app/                      Expo Router routes: thin shells rendering feature screens  WP0 (fixed; screens are built in src/features)
 src/engine/                   pure TypeScript, NO react / react-native / expo imports
   types.ts                    shared contracts (section 5)                             WP0 (frozen afterwards)
   pattern/                    tile maths, rows, runs, stats                            WP1
@@ -161,7 +161,6 @@ src/features/library/         stitch library + detail screens                   
 src/features/guide/           pattern guide screen                                     WP9
 src/features/picture/         picture guide screen                                     WP10
 src/features/projects/        projects list, setup sheet, settings                     WP11
-src/copy.ts                   all strings                                              WP3 creates; later WPs append their own section
 scripts/fixtures/             fixture generators run against reference/web             WP1, WP2
 fixtures/                     generated golden JSON (committed)                        WP1, WP2
 reference/web/                read-only reference                                      nobody edits
@@ -369,7 +368,7 @@ Rules for every agent:
 **Goal:** an Expo app that boots, with the layout, tooling and contracts everyone else builds on.
 
 - `npx create-expo-app` (TypeScript, Expo Router) at the repo root, keeping `PLAN.md` and `reference/`.
-- `app.json`: name, slug, `web.output: "static"`, `ios.bundleIdentifier` and `android.package` (placeholders from section 11), portrait, `userInterfaceStyle: "automatic"`, `supportsTablet: false`, photo-library and camera usage strings ("Pick a picture to turn into a weaving pattern. It stays on your device.").
+- `app.json`: name, slug, `web.output: "single"` (a client-rendered app; state lives in browser storage), `ios.bundleIdentifier` and `android.package` (placeholders from section 11), portrait, `userInterfaceStyle: "automatic"`, `supportsTablet: false`, photo-library and camera usage strings ("Pick a picture to turn into a weaving pattern. It stays on your device.").
 - Folder skeleton from 4.1 with an `index.ts` per folder; tab and stack route shells that render a placeholder title.
 - `src/engine/types.ts` exactly as section 5.
 - ESLint (with the `src/engine` import restriction), Prettier, Jest (`jest-expo`), RNTL, `npm run check`, `npm run web:export`, GitHub Actions workflow.
@@ -407,7 +406,7 @@ Rules for every agent:
 
 ### WP3 — Design system and primitives
 
-**Owns:** `src/ui/`, `src/copy.ts`, `assets/fonts/`. **Depends on:** WP0.
+**Owns:** `src/ui/`, `assets/fonts/`. **Depends on:** WP0.
 
 - `theme.ts`: tokens from the web CSS, light and dark, exactly:
 
@@ -502,7 +501,7 @@ deletePicture(uri: string): Promise<void>
 
 ### WP8 — Stitch library screens
 
-**Owns:** `src/features/library/`, `app/(tabs)/index.tsx`, `app/stitch/[id].tsx`. **Depends on:** WP4, WP5, WP6.
+**Owns:** `src/features/library/` (exports `LibraryScreen`, `StitchDetailScreen`). **Depends on:** WP4, WP5, WP6.
 
 Build sections 3.2 and 3.3, including the Continue / Quick start card, search, category chips, favourites, Front/Back toggle, the written-out repeat, the math with a try-a-warp-count stepper, and Start weaving → `project/new?stitch=<id>`.
 
@@ -512,7 +511,7 @@ Build sections 3.2 and 3.3, including the Continue / Quick start card, search, c
 
 ### WP9 — Pattern guide screen
 
-**Owns:** `src/features/guide/`. **Depends on:** WP4, WP6. (Route file `app/project/[id].tsx` is owned by WP11, which dispatches by project kind.)
+**Owns:** `src/features/guide/` (exports `PatternGuide`), `src/platform/` except `legacyImport`. **Depends on:** WP4, WP6.
 
 Build section 3.4 as `PatternGuide({ projectId })`. Haptic on Row done (`expo-haptics`) and keep-awake (`expo-keep-awake`), both behind Settings and wrapped in `src/platform/` so web gets Wake Lock and a haptics no-op. Also in `src/platform/`: a `useRowKeys(onPrev, onNext)` hook for ← / → on web. Jump-to-row from the drawdown. "Back to row 1" asks for confirmation when the current row is above 10.
 
@@ -532,11 +531,11 @@ Build section 3.5 as `PictureGuide({ projectId })`: empty state, picking, palett
 
 ### WP11 — Projects, setup and settings
 
-**Owns:** `src/features/projects/`, `app/(tabs)/projects.tsx`, `app/(tabs)/settings.tsx`, `app/project/*`. **Depends on:** WP3, WP4, WP5.
+**Owns:** `src/features/projects/` (exports `ProjectsScreen`, `SettingsScreen`, `ProjectScreen`, `ProjectSetupScreen`). **Depends on:** WP3, WP4, WP5.
 
 - Projects list (3.6) with rename, duplicate, delete-with-confirm, and "New from picture".
 - Setup sheet used for both new and existing pattern projects: **warp stepper first**, with the fit hint ("6 repeats of 4, clean edges" / "5 repeats of 4, plus 2 extra"); Start on (buttons named by `tileRowName`, hidden when the tile has one row); Yarn colors A/B; Direction (As shown / Mirrored); Row 1 starts at the (Left edge / Right edge); primary button "Start weaving".
-- `app/project/[id].tsx` renders `PatternGuide` or `PictureGuide` by kind, and a not-found state.
+- `ProjectScreen` renders `PatternGuide` or `PictureGuide` by kind, and a not-found state.
 - Settings screen for everything in `Settings`, plus an About block with the privacy line and version.
 
 **Accept:** RNTL: create → appears in list → open → delete; setup hint text for 24 and 26 warps on `twill22`; theme override switches tokens. Web screenshots of each screen.
