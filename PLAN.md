@@ -1,6 +1,6 @@
-# Oh a Twill — iOS weaving app: build plan
+# Oh a Twill — weaving app build plan: web first, then iOS and Android
 
-Status: **plan only, nothing built.** This document is written to be handed to subagents. Each work package (WP) in section 8 is a self-contained brief; sections 1–7 are the shared context every agent needs.
+Status: **plan only, nothing built.** One codebase, three targets, released in this order: **1. web app, 2. iOS, 3. Android.** This document is written to be handed to subagents. Each work package (WP) in section 8 is a self-contained brief; sections 1–7 are the shared context every agent needs.
 
 Working title is "Oh a Twill" (from the repo name). See open decisions in section 11.
 
@@ -8,7 +8,7 @@ Working title is "Oh a Twill" (from the repo name). See open decisions in sectio
 
 ## 1. What we are building
 
-An iPhone app that helps someone weave on a small frame loom with a needle. It does three things:
+An app that helps someone weave on a small frame loom with a needle. It ships first as an installable, offline-capable **web app**, then as an **iOS** app, then as an **Android** app, all from the same Expo codebase. It does three things:
 
 1. **Stitch library** (new, the headline feature). Browse weave stitches as cards with a woven preview. Each stitch has a detail page: what it looks like front and back, the row-by-row over/under sequence, the math (repeat width, rows per repeat, floats), tips, and a "Start weaving" button.
 2. **Row-by-row guide** (ported from the web app). For the chosen stitch and warp count, shows one row at a time: travel direction, over/under steps in the order you weave them, an edge-catch warning, a drawdown, and Back / Row done.
@@ -28,7 +28,7 @@ The reference file was transcribed from the owner's paste and checked to load an
 
 ### Out of scope for v1
 
-Custom pattern editor, yarn amount estimates, printable pattern sheets, non-grid techniques (soumak, rya knots, loops, twining, tapestry joins), iPad layout, Android, accounts, sync, analytics. Section 10 lists them as later phases. Nothing in v1 should make them harder: keep the engine pure and the catalog data-driven.
+Custom pattern editor, yarn amount estimates, printable pattern sheets, non-grid techniques (soumak, rya knots, loops, twining, tapestry joins), tablet-specific layouts, accounts, sync, analytics. Section 10 lists them as later phases. Nothing in v1 should make them harder: keep the engine pure and the catalog data-driven.
 
 ---
 
@@ -36,16 +36,19 @@ Custom pattern editor, yarn amount estimates, printable pattern sheets, non-grid
 
 | Decision | Choice | Why |
 |---|---|---|
-| Stack | **Expo (React Native) + TypeScript**, Expo Router | Chosen by the owner. The web engines are pure JS and port nearly line for line. Agents on Linux can type-check, unit test and render the UI in a browser. No Mac needed to get it on a phone. |
+| Stack | **Expo (React Native) + TypeScript**, Expo Router, with `react-native-web` for the web target | Chosen by the owner. One codebase runs on web, iOS and Android. The web engines are pure JS and port nearly line for line. No Mac needed to get it on a phone. |
+| Release order | **Web first**, then iOS, then Android | Chosen by the owner. The web build is the one agents can fully run and test on Linux, so it is also the lowest-risk first release. Phone releases then reuse everything and only add platform work. |
+| Web delivery | Static export (`npx expo export --platform web`), installable PWA with a service worker for offline use, deployed to GitHub Pages by a GitHub Actions workflow | Works at the loom without signal; no server; same privacy promise. |
+| Platform differences | Isolated in `.web.ts` / `.native.ts` files inside `src/media/` and `src/platform/` only. Feature code never checks `Platform.OS` except for layout tweaks. | Keeps the three targets from leaking into each other. |
 | Scope | **Web parity + stitch library + saved projects** | Chosen by the owner. |
 | Expo Go compatible | Only libraries bundled in Expo Go; **no custom native modules** in v1 | Lets the owner run it by scanning a QR code, with no Apple Developer account and no build. |
 | Grid rendering | `react-native-svg` with run-merged rects, behind one `GridView` component | Works in Expo Go and on web (so agents can screenshot it). Skia is the fallback if device profiling shows dropped frames at 120 × 400; swapping must only touch `GridView`. |
-| State | `zustand` + `persist` on `@react-native-async-storage/async-storage`; pictures as files via `expo-file-system` | Small data, simple, versioned migration. |
-| Image pipeline | `expo-image-picker` → `expo-image-manipulator` (resize to `W*4 × H*4`, PNG, base64) → pure-JS PNG decode → engine | Engine stays pure and testable; no native pixel-access module needed. |
+| State | `zustand` + `persist` on `@react-native-async-storage/async-storage` (which is `localStorage` on web). Pictures: files via `expo-file-system` on phones, IndexedDB blobs on web. | Small data, simple, versioned migration. |
+| Image pipeline | Web: file input / drag and drop → canvas resize to `W*4 × H*4` → `getImageData` → engine (same as the reference). Phones: `expo-image-picker` → `expo-image-manipulator` (resize, PNG, base64) → pure-JS PNG decode → engine. | Engine stays pure and testable; no native pixel-access module needed. |
 | Privacy | Fully offline. Pictures never leave the device. No analytics, no network calls at runtime (font is bundled). | The web UI promises this; keep the promise. |
 | Icons | **Heroicons outline 24**, path data inlined in a local `Icon` component drawn with `react-native-svg` | Owner's standing preference for all app designs. Do not add another icon set or an icon package. |
 | Font | **Familjen Grotesk** 400/500/600/700, bundled (via `@expo-google-fonts/familjen-grotesk` if it exists, otherwise the OFL TTFs in `assets/fonts/`). System font as fallback. | Matches the web app. |
-| Platform | iPhone, portrait, light and dark. `supportsTablet: false`. | Keep v1 small. |
+| Layout | One phone-first column, max width 720 px and centred on wide screens, light and dark. Phones are portrait only; `supportsTablet: false`. | Keep v1 small. |
 
 Pin the Expo SDK to the latest stable release at scaffold time and record it in `CLAUDE.md`. Install Expo-managed packages with `npx expo install` so versions match the SDK.
 
@@ -115,7 +118,22 @@ The **warp stepper** lives at the top of the setup sheet (it was first on the we
 
 List rows: thumbnail (stitch preview or picture), name, "Row 37 · 24 warps", last-woven date. Swipe to delete (confirm), rename, duplicate. Finished picture projects get a check. Empty state points to the Stitches tab and "New from picture".
 
-### 3.7 Copy and tone
+### 3.7 Platform notes
+
+**Web (first release)**
+
+- Runs in any modern browser and installs to the home screen as a PWA. After the first visit it works offline.
+- Keyboard: ← and → trigger Back and Row done in the guide (not while typing in a field).
+- Pictures: a file input plus drag and drop onto the picture card. On a phone browser the file input already offers the camera, so there is no separate Camera button on web.
+- Screen stays awake in the guide through the Wake Lock API where the browser supports it; haptics are a no-op.
+- **Import from the old web app:** on first run, if `localStorage` holds `weaving-helper-v3` (GitHub Pages sites under the same username share an origin), offer "Bring over your weaving from the old helper" and create one project from it (pattern, start, mirror, side, colours, row, warps; the stored picture too if present). Never delete the old key.
+- Browser back and forward follow the route stack; every screen has a shareable URL.
+
+**iOS:** as described in 3.1–3.6 (haptics, keep awake, Dynamic Type, VoiceOver, photo library and camera).
+
+**Android:** same screens. Differences are listed in section 8, WP15: system back, edge-to-edge insets, the system photo picker, TalkBack, font scaling, adaptive icon.
+
+### 3.8 Copy and tone
 
 Reuse the web app's strings verbatim wherever a screen is ported. Sentence case, plain language, typographic quotes (’). All user-facing strings live in `src/copy.ts` so they can be reviewed in one place.
 
@@ -137,7 +155,8 @@ src/catalog/                  stitch data + lookup                              
 src/store/                    zustand stores, persistence, migrations                  WP4
 src/ui/                       theme, fonts, Icon, primitives                           WP3
 src/weave/                    GridView, TilePreview, WarpStrip, StepChips, Drawdown…   WP6
-src/media/                    pick, resize, decode, store pictures                     WP7
+src/media/                    pick, resize, decode, store pictures (.web / .native)    WP7
+src/platform/                 haptics, keep awake, key handling, legacy import          WP4 (legacy import), WP9 (the rest)
 src/features/library/         stitch library + detail screens                          WP8
 src/features/guide/           pattern guide screen                                     WP9
 src/features/picture/         picture guide screen                                     WP10
@@ -147,6 +166,7 @@ scripts/fixtures/             fixture generators run against reference/web      
 fixtures/                     generated golden JSON (committed)                        WP1, WP2
 reference/web/                read-only reference                                      nobody edits
 e2e/                          Playwright checks against the web export                 WP12
+public/, .github/workflows/   PWA manifest, service worker, Pages deploy               WP13
 ```
 
 ### 4.2 Layering rule
@@ -161,7 +181,7 @@ e2e/                          Playwright checks against the web export          
 - `npm run web:export` = `npx expo export --platform web`; WP12 serves `dist/` and drives it with Playwright at 390 × 844 in light and dark. Chromium and Playwright are preinstalled in the cloud containers; do not reinstall them.
 - GitHub Actions workflow running `npm run check` on push.
 
-Agents cannot run the iOS simulator on Linux. Verification is: unit tests, component tests, and screenshots of the web export. Anything that can only be checked on a phone goes on the owner's device checklist (section 9).
+The web app is the primary target and is fully verifiable by agents: unit tests, component tests, and Playwright against the real export. Agents cannot run the iOS simulator on Linux, so iOS-only behaviour goes on the owner's device checklist (section 9). Android can be built on Linux and exercised on a CI emulator (WP16).
 
 ---
 
@@ -326,8 +346,12 @@ Wave 0   WP0                              serial, must merge first
 Wave 1   WP1  WP2  WP3  WP4               parallel
 Wave 2   WP5  WP6  WP7                    parallel   (WP5←WP1, WP6←WP1+WP3, WP7←WP2)
 Wave 3   WP8  WP9  WP10  WP11             parallel   (need Wave 2 + WP4)
-Wave 4   WP12 then WP13                   serial
+Wave 4   WP12 then WP13                   serial     → WEB RELEASE (milestone 1)
+Wave 5   WP14                             serial     → iOS (milestone 2)
+Wave 6   WP15 then WP16                   serial     → Android (milestone 3)
 ```
+
+Waves 0–4 build the whole app and ship it on the web. Waves 5 and 6 add no features; they adapt, build and verify the same code on each phone platform. WP14 and WP15 may run in parallel once the web release is out.
 
 Rules for every agent:
 
@@ -345,7 +369,7 @@ Rules for every agent:
 **Goal:** an Expo app that boots, with the layout, tooling and contracts everyone else builds on.
 
 - `npx create-expo-app` (TypeScript, Expo Router) at the repo root, keeping `PLAN.md` and `reference/`.
-- `app.json`: name, slug, `ios.bundleIdentifier` (placeholder from section 11), portrait, `userInterfaceStyle: "automatic"`, `supportsTablet: false`, photo-library and camera usage strings ("Pick a picture to turn into a weaving pattern. It stays on your device.").
+- `app.json`: name, slug, `web.output: "static"`, `ios.bundleIdentifier` and `android.package` (placeholders from section 11), portrait, `userInterfaceStyle: "automatic"`, `supportsTablet: false`, photo-library and camera usage strings ("Pick a picture to turn into a weaving pattern. It stays on your device.").
 - Folder skeleton from 4.1 with an `index.ts` per folder; tab and stack route shells that render a placeholder title.
 - `src/engine/types.ts` exactly as section 5.
 - ESLint (with the `src/engine` import restriction), Prettier, Jest (`jest-expo`), RNTL, `npm run check`, `npm run web:export`, GitHub Actions workflow.
@@ -419,7 +443,8 @@ Rules for every agent:
 
 - `useProjects`: create (pattern / picture), update, rename, duplicate, delete, `setRow`, `nextRow`, `prevRow`, `lastOpenedId`. Enforce limits from section 5 and the reset rules in section 6 item 10 inside the actions, so screens cannot get them wrong.
 - `useSettings` with the defaults in section 5.
-- Persist with a `version` and a `migrate` function from day one. Storage failures are caught; the app must keep working in memory.
+- Persist with a `version` and a `migrate` function from day one, under the key `oh-a-twill/v1`. Storage failures are caught; the app must keep working in memory.
+- `src/platform/legacyImport.web.ts`: read `weaving-helper-v3` (see `reference/web/index.html` for its shape), convert it to one project, never modify the old key. The native file exports a no-op.
 - Deleting a picture project deletes its image file (through an injected `deleteFile` so the store stays testable).
 - Default project names: stitch name, or "Picture 1", "Picture 2".
 
@@ -457,14 +482,21 @@ Rules for every agent:
 
 **Owns:** `src/media/`. **Depends on:** WP2. **Adds:** `expo-image-picker`, `expo-image-manipulator`, `expo-file-system`, one pure-JS PNG decoder (`fast-png` or `upng-js`).
 
-- `pickPicture(source: 'library' | 'camera')`: launch the picker, normalise orientation, downscale to max 1024 px on the long side, save as JPEG in the app's documents directory, return `{ uri, width, height }`.
-- `samplePicture(uri, W, H)`: resize to `W*4 × H*4`, export PNG base64, decode to RGBA, return `boxAverage(...)` output. Cache the result per `(uri, W, H)` so changing k or tidy does not re-read the image.
-- `buildPicture(project)`: `samplePicture` → `quantize`; returns a `PictureGrid`. Yields to the UI before the heavy step so a spinner can show.
-- Errors map to the reference copy: "That picture couldn’t be read. Try a JPG or PNG."
-- `deletePicture(uri)`.
-- Web shim (file input + canvas) so the web export used for screenshots can load a bundled sample image.
+One interface, two implementations. Screens import from `src/media` and never know which is running.
 
-**Accept:** unit tests with the Expo modules mocked: correct resize arguments, cache hits, error mapping; a decode test on a committed small PNG with transparency (alpha flattens to white).
+```ts
+pickPicture(source: 'library' | 'camera'): Promise<{ uri: string; width: number; height: number } | null>
+samplePicture(uri: string, W: number, H: number): Promise<Float32Array>   // boxAverage output
+buildPicture(project: PictureProject): Promise<PictureGrid>               // samplePicture → quantize
+thumbnailSource(uri: string): Promise<string>                             // something <Image> can show
+deletePicture(uri: string): Promise<void>
+```
+
+- **`.web.ts` (needed for the web release):** hidden file input and a drop target helper; decode with `createImageBitmap` / `Image`; paint onto white and downscale to max 1024 px; store the JPEG blob in IndexedDB under a generated id (`uri` = `idb:<id>`); `samplePicture` draws to an offscreen canvas at `W*4 × H*4` with high-quality smoothing and reads `getImageData`, exactly like the reference.
+- **`.native.ts` (used by iOS and Android):** launch the picker, normalise orientation, downscale to max 1024 px, save as JPEG in the documents directory; `samplePicture` resizes to `W*4 × H*4`, exports PNG base64, decodes to RGBA in JS.
+- Both: cache the sampled pixels per `(uri, W, H)` so changing k or tidy does not re-read the image; yield to the UI before the heavy step so a spinner can show; map failures to "That picture couldn’t be read. Try a JPG or PNG." and non-images to "That file isn’t a picture. Try a JPG or PNG."
+
+**Accept:** unit tests with the Expo modules mocked (resize arguments, cache hits, error mapping); a decode test on a committed small PNG with transparency (alpha flattens to white); a Playwright test that loads a bundled sample image through the web implementation and gets a `PictureGrid` back.
 
 ---
 
@@ -482,7 +514,7 @@ Build sections 3.2 and 3.3, including the Continue / Quick start card, search, c
 
 **Owns:** `src/features/guide/`. **Depends on:** WP4, WP6. (Route file `app/project/[id].tsx` is owned by WP11, which dispatches by project kind.)
 
-Build section 3.4 as `PatternGuide({ projectId })`. Haptic on Row done (`expo-haptics`) and keep-awake (`expo-keep-awake`), both behind Settings. Jump-to-row from the drawdown. "Back to row 1" asks for confirmation when the current row is above 10.
+Build section 3.4 as `PatternGuide({ projectId })`. Haptic on Row done (`expo-haptics`) and keep-awake (`expo-keep-awake`), both behind Settings and wrapped in `src/platform/` so web gets Wake Lock and a haptics no-op. Also in `src/platform/`: a `useRowKeys(onPrev, onNext)` hook for ← / → on web. Jump-to-row from the drawdown. "Back to row 1" asks for confirmation when the current row is above 10.
 
 **Accept:** RNTL: Row done advances and persists; Back is disabled on row 1; row 2 reads right to left when row 1 starts on the left; the edge tip appears for a case taken from the WP1 fixtures and not otherwise; changing the start row in setup resets to row 1. Web screenshots for `twill22` at 24 warps and `herring` at 120 warps.
 
@@ -511,40 +543,98 @@ Build section 3.5 as `PictureGuide({ projectId })`: empty state, picking, palett
 
 ---
 
-### WP12 — Integration, accessibility and polish
+### WP12 — Integration, accessibility and polish (web)
 
 **Owns:** `e2e/`, cross-cutting fixes agreed with the orchestrator. **Depends on:** all above.
 
-- Playwright flow against the web export at 390 × 844, light and dark: first launch → Quick start → three rows done → reload → still on row 4; library → Houndstooth → Start weaving; new picture project with the sample image → rows → finished.
+- Playwright flow against the web export at 390 × 844 and 1280 × 800, light and dark: first launch → Quick start → three rows done → reload → still on row 4; library → Houndstooth → Start weaving; new picture project with the sample image → rows → finished; arrow keys advance rows; legacy import offered when `weaving-helper-v3` is seeded.
 - Check against the web reference side by side for `twill22`/24: same step text for rows 1–8.
-- Accessibility pass: labels, roles, focus order, 44 pt targets, Dynamic Type at the largest size without clipping, contrast.
+- Accessibility pass: labels, roles, focus order and visible focus rings, 44 pt targets, text zoom to 200% without clipping, contrast, `prefers-reduced-motion`.
 - Empty, loading and error states everywhere; safe areas; keyboard avoidance on number entry.
-- App icon and splash (simple twill motif in the brand colours), produced as assets, no extra dependencies.
-- `README.md`: how to run, test, and get it on a phone.
+- App icon, favicon and splash (simple twill motif in the brand colours), produced as assets, no extra dependencies.
+- `README.md`: how to run, test and deploy.
 
-**Accept:** e2e green; a screenshot set committed under `docs/screens/`; open issues listed with severity.
+**Accept:** e2e green in Chromium and WebKit; a screenshot set committed under `docs/screens/`; open issues listed with severity.
 
 ---
 
-### WP13 — Device builds and release prep
+### WP13 — Web release: PWA and deploy
 
-**Depends on:** WP12 and the owner prerequisites in section 9.
+**Owns:** `public/`, `.github/workflows/deploy-web.yml`, web fields in `app.json`. **Depends on:** WP12.
 
-- `eas.json` with `development`, `preview` and `production` profiles; `expo-doctor` clean.
+- Static export with `experiments.baseUrl` set to the Pages sub-path (`/oh-a-twill`), and a `404.html` fallback so deep links survive a reload.
+- Web app manifest: name, short name, icons (192, 512, maskable), `display: standalone`, theme and background colours for light and dark, portrait.
+- Service worker (Workbox, generated at build time): precache the app shell, JS, fonts and icons; cache-first for hashed assets; a new version activates on next launch with a small "Updated" toast. No runtime network calls exist to cache.
+- iOS Safari extras: `apple-touch-icon`, status bar style, safe-area viewport.
+- GitHub Actions workflow: on push to the default branch run `npm run check`, export, and publish with the official Pages actions.
+- Lighthouse run in CI: PWA installable, performance and accessibility ≥ 90 on mobile.
+
+**Accept:** the exported site served from a sub-path works end to end in Playwright, including a reload with the network disabled; Lighthouse thresholds met; the deploy workflow passes a dry run. Going live needs the owner to enable Pages (section 9).
+
+**Milestone 1 is done here: the web app is live.**
+
+---
+
+### WP14 — iOS builds and release prep
+
+**Depends on:** WP13 and the owner prerequisites in section 9.
+
+- `app.json` iOS block: bundle identifier, usage strings, icon, splash. `eas.json` with `development`, `preview` and `production` profiles; `expo-doctor` clean.
+- Walk the app in Expo Go and fix iOS-only issues: safe areas, keyboard, font loading, picker and camera flow, haptics, keep awake, Dynamic Type, VoiceOver order.
 - Document the two ways to run on the owner's iPhone: Expo Go from a local `npx expo start`, and an EAS build delivered through TestFlight.
-- App Store metadata draft: description, keywords, privacy answers ("Data not collected"), screenshots from `docs/screens/`.
+- App Store metadata draft: description, keywords, privacy answers ("Data not collected"), screenshots.
 - Do not submit anything; produce the build and the checklist, and hand to the owner.
 
-**Accept:** a successful EAS iOS build (if credentials are available) or a precise list of what is blocked on the owner.
+**Accept:** a successful EAS iOS build (if credentials are available) or a precise list of what is blocked on the owner; the device checklist in section 9 handed over.
+
+---
+
+### WP15 — Android adaptation
+
+**Owns:** Android fields in `app.json`, Android-specific fixes in the owning folders (agreed with the orchestrator). **Depends on:** WP13.
+
+No new features. Make the same app behave like a good Android citizen:
+
+- **Config:** `android.package`, `versionCode`, adaptive icon (foreground twill motif, solid background, monochrome layer for themed icons), splash, portrait.
+- **Edge to edge:** Android draws under the status and navigation bars. Every screen, the bottom bar and all sheets must use safe-area insets; check both gesture navigation and three-button navigation. Bar icon colours follow the theme.
+- **System back:** back closes sheets and modals first, then pops the stack, then leaves the app from a tab root. In the guide, back never changes the row. Predictive back gesture enabled.
+- **Pictures:** `expo-image-picker` uses the system photo picker on current Android, which needs no storage permission. Camera needs the camera permission; declare only that. Confirm picked `content://` URIs are copied into app storage before use.
+- **Keyboard:** numeric entry in the steppers; set the soft-input mode so the bottom bar is not pushed over content.
+- **Touch feedback:** ripple on pressables (`android_ripple`) in place of iOS opacity; haptics via `expo-haptics` with a check that the lightest style is actually felt on Android, falling back to a slightly stronger one.
+- **Type:** bundled Familjen Grotesk with explicit per-weight font families (Android does not synthesise weights from one family name); respect the system font scale up to 200%; tabular numerals verified.
+- **Accessibility:** TalkBack labels and reading order; 48 dp touch targets.
+- **Performance:** Hermes on; check the 120 × 400 preview and a k = 8 rebuild on a mid-range device profile. This is the most likely place to need the Skia `GridView` fallback.
+- **Storage:** AsyncStorage and the documents directory behave as on iOS; exclude picture files from cloud auto-backup or include them consistently with the project list (decide once, default: include both).
+
+**Accept:** `npm run check` green; a debug APK builds on Linux (`npx expo prebuild --platform android` then Gradle) in CI; a written list of every Android-specific change made.
+
+---
+
+### WP16 — Android verification, builds and release prep
+
+**Depends on:** WP15 and the owner prerequisites in section 9.
+
+- **Emulator tests in CI:** a GitHub Actions job that boots an Android emulator and runs a short Maestro flow on the debug APK: Quick start → three rows done → relaunch → still on row 4; open Houndstooth → Start weaving; system back from the guide returns to the list without changing the row. Run on one phone-sized API level near the minimum Expo supports and one current level.
+- `eas.json` Android profiles: `preview` builds an **APK** the owner can install directly from a link; `production` builds an **AAB** for Google Play.
+- Play Store listing draft: short and full description, feature graphic, screenshots, content rating answers, Data safety form ("No data collected, no data shared"), target-API compliance check.
+- Document the three ways to run it: Expo Go on an Android phone, the preview APK, and Play testing tracks.
+- Do not publish anything; produce the builds and the checklist, and hand to the owner.
+
+**Accept:** emulator flow green in CI; a preview APK produced (if an Expo token is available) or a precise list of what is blocked on the owner.
+
+**Android compared with iOS, for planning:** agents can build and run Android on Linux and in CI, so much more is verified before the owner touches it. A sideloadable APK needs only the free Expo account. Publishing on Google Play needs a Google Play developer account (one-time fee), and new personal accounts must run a closed test with a minimum number of testers for a set period before they can publish to production; check the current Play Console rules when you get there.
 
 ---
 
 ## 9. What only the owner can do
 
 1. **Confirm the stitch additions** in section 7 and the app name / bundle id in section 11.
-2. **Expo account** (free) and an `EXPO_TOKEN` for cloud builds. Needed for WP13 only.
-3. **Apple Developer Program** membership if the app should be installed through TestFlight or the App Store. Not needed to try it in Expo Go.
-4. **Device checklist** after WP12 (things agents cannot verify on Linux): fonts load; haptics fire; screen stays awake in the guide; photo picker and camera work and the permission wording reads right; a real flower photo quantizes cleanly at 4 colours; the 120-warp preview scrolls smoothly; VoiceOver reads a row sensibly; dark mode at the loom is readable.
+2. **Web release:** merge to the default branch and turn on GitHub Pages for this repo (Settings → Pages → Source: GitHub Actions). Pages on a private repo needs a paid GitHub plan; otherwise make the repo public or pick another static host.
+3. **Expo account** (free) and an `EXPO_TOKEN` for cloud builds. Needed for WP14 and WP16 only.
+4. **Apple Developer Program** membership if the iOS app should be installed through TestFlight or the App Store. Not needed to try it in Expo Go.
+5. **Google Play developer account** only if the Android app should go on the Play Store. Not needed for Expo Go or the installable APK.
+6. **Android check:** install the preview APK on a real phone and repeat the device checklist below, plus system back and gesture navigation.
+7. **iOS device checklist** after WP14 (things agents cannot verify on Linux): fonts load; haptics fire; screen stays awake in the guide; photo picker and camera work and the permission wording reads right; a real flower photo quantizes cleanly at 4 colours; the 120-warp preview scrolls smoothly; VoiceOver reads a row sensibly; dark mode at the loom is readable.
 
 ---
 
@@ -554,7 +644,7 @@ Build section 3.5 as `PictureGuide({ projectId })`: empty state, picking, palett
 - **Custom pattern editor**: draw a tile on a grid, save it as a personal stitch. The engine already accepts any `Structure`.
 - **Yarn estimates** from warp width and square counts.
 - **Pattern sheet export** (PDF / share sheet).
-- **iPad layout**, **Android**, **iCloud backup**.
+- **Tablet layouts** (iPad, Android tablets), **cloud backup / sync between the web app and the phone apps** (v1 data is per device).
 - **Hands-free**: read the row aloud; advance with a volume button or a Bluetooth pedal.
 
 ---
@@ -564,11 +654,12 @@ Build section 3.5 as `PictureGuide({ projectId })`: empty state, picking, palett
 | Question | Default |
 |---|---|
 | App name | "Oh a Twill" |
-| Bundle identifier | `com.example.ohatwill` placeholder, replaced before WP13 |
+| iOS bundle identifier and Android package | `com.example.ohatwill` placeholder for both, replaced before WP14 / WP15 |
+| Web address | GitHub Pages at `/oh-a-twill` |
 | Stitch additions in section 7 | Include all six |
 | Spelling | US in ported strings ("Color"), matching the web app |
 | Keep screen awake in the guide | On by default |
-| Camera as a picture source | Included |
+| Camera as a picture source | Included on phones; on web the file input covers it |
 
 ---
 
@@ -577,9 +668,12 @@ Build section 3.5 as `PictureGuide({ projectId })`: empty state, picking, palett
 | Risk | Mitigation |
 |---|---|
 | Engine drift from the web app | Golden fixtures generated from the reference itself (WP1, WP2); section 6 list. |
-| Agents cannot run iOS | Engine in pure TS; RNTL; web export + Playwright; explicit owner device checklist. |
+| Agents cannot run iOS | Web is the first and fully tested release; engine in pure TS; RNTL; explicit owner device checklist for iOS. |
+| Web and phone builds drift apart | One codebase; platform code confined to `src/media` and `src/platform`; the same e2e flows run on web (Playwright) and Android (Maestro). |
+| Browser storage is cleared by the browser | Ask for persistent storage (`navigator.storage.persist()`) on web; say in Settings that data lives on this device. |
+| Low-end Android is slow on big grids | Budget test in WP15; Skia fallback behind `GridView`. |
 | Large grids are slow in SVG | Run merging, banded rendering, single `GridView` seam with a Skia fallback. |
 | Parallel agents collide | One owner per path; frozen contracts; route files assigned; orchestrator merges wave by wave. |
 | Wrong weaving advice in catalog copy | Catalog validation, drawdown snapshots, contact sheet, owner review; copy limited to what the maths supports. |
 | Photo results differ from the web | Accepted and documented; parity defined at the pixel-buffer boundary. |
-| Dependency breaks Expo Go | Dependency allow-list per WP; `expo-doctor` in WP13; no custom native modules in v1. |
+| Dependency breaks Expo Go or web | Dependency allow-list per WP; every dependency must support web, iOS and Android; `expo-doctor` in WP14; no custom native modules in v1. |
