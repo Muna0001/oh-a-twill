@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Weaving helper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1EC; --surface:#FFFFFF; --ink:#1C2333; --muted:#5A6375; --line:#D5DAD1;
+  --weft:#2E4C8F; --weft-ink:#FFFFFF; --warp:#D8D1C0; --warp-shade:#C2B9A4;
+  --mark:#D9A521; --over-chip:#E2E8F5; --under-chip:#EDEAE2;
+  --warn:#7A5100; --warn-bg:#FBF0D3; --btn:#1C2333; --btn-ink:#FFFFFF;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11151D; --surface:#1A202B; --ink:#E6E9EF; --muted:#9AA3B5; --line:#2C3342;
+    --weft:#7C98DC; --weft-ink:#0F1420; --warp:#4B505D; --warp-shade:#5E6474;
+    --mark:#E8BE55; --over-chip:#22314F; --under-chip:#2C2F38;
+    --warn:#F0C66A; --warn-bg:#352B15; --btn:#E6E9EF; --btn-ink:#11151D;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11151D; --surface:#1A202B; --ink:#E6E9EF; --muted:#9AA3B5; --line:#2C3342;
+  --weft:#7C98DC; --weft-ink:#0F1420; --warp:#4B505D; --warp-shade:#5E6474;
+  --mark:#E8BE55; --over-chip:#22314F; --under-chip:#2C2F38;
+  --warn:#F0C66A; --warn-bg:#352B15; --btn:#E6E9EF; --btn-ink:#11151D;
+  color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Familjen Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size:1rem; line-height:1.45; -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(5.5rem + env(safe-area-inset-bottom,0px));
+}
+button{font:inherit;color:inherit}
+[hidden]{display:none!important}
+svg.i{width:1.25rem;height:1.25rem;flex:none}
+.wrap{max-width:44rem;margin:0 auto;padding:1.25rem 1rem 0}
+header h1{font-size:1.75rem;line-height:1.1;margin:0 0 .25rem;font-weight:700;letter-spacing:-.01em}
+header p{margin:0 0 1.25rem;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1rem;margin-bottom:1rem}
+.panel h2{font-size:1.05rem;margin:0;font-weight:600}
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:.75rem}
+.link{background:none;border:0;padding:.35rem .5rem;margin:-.35rem -.5rem;color:var(--weft);font-weight:600;cursor:pointer;border-radius:8px}
+.hint{margin:.25rem 0 .75rem;color:var(--muted);font-size:.9rem}
+:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+
+.btns{display:flex;flex-wrap:wrap;gap:.45rem}
+.btn{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--line);background:var(--surface);padding:.5rem .8rem;border-radius:10px;cursor:pointer;font-weight:500;min-height:2.6rem}
+.btn:hover{border-color:var(--muted)}
+.btn.primary,.btn[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink);border-color:var(--btn);font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:none;padding:.5rem .85rem;cursor:pointer;min-height:2.6rem}
+.seg button[aria-pressed="true"]{background:var(--btn);color:var(--btn-ink);font-weight:600}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px}
+.stepper button{border:0;background:none;width:2.6rem;height:2.6rem;display:grid;place-items:center;cursor:pointer}
+.stepper output,.stepper input{min-width:2.5rem;width:3.5rem;text-align:center;font:inherit;font-weight:700;font-size:1.1rem;border:0;background:none;color:var(--ink);font-variant-numeric:tabular-nums;-moz-appearance:textfield;appearance:textfield}
+.stepper input::-webkit-inner-spin-button,.stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.field-label{font-size:.9rem;color:var(--muted);margin:0 0 .45rem;font-weight:500}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:1rem}
+.check{display:flex;align-items:center;gap:.5rem;cursor:pointer;min-height:2.6rem}
+.check input{width:1.2rem;height:1.2rem;accent-color:var(--weft)}
+.warp-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.warp-row .hint{margin:.15rem 0 0}
+
+/* Tabs */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:.25rem;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:.25rem;margin-bottom:1rem}
+.tabs button{display:flex;align-items:center;justify-content:center;gap:.45rem;border:0;background:none;padding:.6rem;border-radius:9px;cursor:pointer;font-weight:500;min-height:2.75rem}
+.tabs button[aria-selected="true"]{background:var(--btn);color:var(--btn-ink);font-weight:600}
+
+/* Pattern picker */
+.editor{border-top:1px solid var(--line);margin-top:1rem;padding-top:1rem;display:grid;gap:1.1rem}
+.pat-current{display:grid;grid-template-columns:5.5rem 1fr;gap:.85rem;align-items:start}
+.pat-current svg{width:100%;height:auto;border-radius:6px;display:block}
+.pat-current h3{margin:0;font-size:1.15rem;line-height:1.2}
+.pat-current p{margin:.2rem 0 0;color:var(--muted);font-size:.95rem}
+.pat-current p.setup{color:var(--ink)}
+.pat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(7rem,1fr));gap:.5rem}
+.pat-card{display:flex;flex-direction:column;gap:.4rem;padding:.45rem;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;text-align:left;font-weight:500;font-size:.92rem}
+.pat-card svg{width:100%;height:auto;border-radius:4px;display:block}
+.pat-card[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink);font-weight:700}
+.colors{display:flex;gap:1rem;flex-wrap:wrap}
+.colors label{display:flex;align-items:center;gap:.45rem;cursor:pointer}
+.colors input{width:2.6rem;height:2.6rem;border:1px solid var(--line);border-radius:8px;padding:2px;background:none;cursor:pointer}
+.sw{display:inline-block;width:1rem;height:1rem;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18);flex:none}
+
+/* Row card */
+.hero{border-width:2px;border-color:var(--ink)}
+.row-head{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.row-num{font-size:2.75rem;font-weight:700;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.row-num small{font-size:1rem;font-weight:500;color:var(--muted);letter-spacing:0;margin-left:.35rem}
+.dir{display:inline-flex;align-items:center;gap:.4rem;font-weight:600;font-size:1.05rem;padding:.4rem .7rem;border-radius:999px;background:var(--over-chip)}
+.dir svg{width:1.4rem;height:1.4rem}
+.sub{margin:.4rem 0 1rem;color:var(--muted)}
+.weft-tag{display:inline-flex;align-items:center;gap:.4rem;color:var(--ink);font-weight:600}
+.rep{list-style:none;margin:-.4rem 0 1rem;padding:0;display:flex;flex-wrap:wrap;gap:.35rem}
+.rep li{font-size:.85rem;padding:.25rem .6rem;border-radius:999px;background:var(--under-chip);color:var(--muted)}
+.rep li.now{background:var(--btn);color:var(--btn-ink);font-weight:600}
+.strip-wrap{overflow-x:auto;margin:0 -.25rem;padding:0 .25rem}
+.strip{position:relative;display:grid;height:3.25rem;min-width:100%}
+.strip .weft{position:absolute;left:0;right:0;top:50%;height:.8rem;transform:translateY(-50%);border-radius:4px;z-index:1;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.strip .w{position:relative;z-index:0;display:flex;justify-content:center}
+.strip .w.under{z-index:2}
+.strip .w span{display:block;width:58%;height:100%;border-radius:3px;box-shadow:inset -2px 0 0 rgba(0,0,0,.15)}
+.pcells{display:grid;height:2.25rem;gap:1px;min-width:100%}
+.pcells span{border-radius:2px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.pstrip{display:grid;height:3.25rem;min-width:100%}
+.pstrip .w{position:relative;display:flex;justify-content:center}
+.pstrip .w span{display:block;width:58%;height:100%;background:var(--warp);border-radius:3px;position:relative;z-index:1;box-shadow:inset -2px 0 0 var(--warp-shade)}
+.pstrip .w i{position:absolute;left:0;right:0;top:50%;height:.8rem;transform:translateY(-50%);z-index:0;box-shadow:inset 0 1px 0 rgba(0,0,0,.12),inset 0 -1px 0 rgba(0,0,0,.12)}
+.pstrip .w.over i{z-index:2}
+.nums{display:grid;font-size:.68rem;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums;margin-top:.25rem;min-width:100%}
+.steps{list-style:none;margin:1rem 0 0;padding:0;display:flex;flex-wrap:wrap;gap:.45rem}
+.steps li{display:flex;flex-direction:column;align-items:flex-start;padding:.45rem .7rem;border-radius:10px;min-width:4.6rem}
+.steps li.over{background:var(--weft);color:var(--weft-ink)}
+.steps li.under{background:var(--under-chip);border:1px solid var(--warp-shade)}
+.steps li.seg-c{background:var(--surface);border:1px solid var(--line)}
+.steps li.seg-c b{display:flex;align-items:center;gap:.4rem}
+.steps b{font-size:1.05rem;font-weight:700}
+.steps small{font-size:.78rem;opacity:.85;font-variant-numeric:tabular-nums}
+.tip{display:flex;gap:.55rem;align-items:flex-start;background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:.65rem .75rem;margin-top:1rem;font-size:.95rem}
+.tip svg{margin-top:.1rem}
+.restart{margin-top:1rem}
+
+/* Drawdown */
+.dd-wrap{overflow-x:auto}
+.dd{display:grid;gap:2px;min-width:max-content}
+.dd-row{display:grid;gap:2px;cursor:pointer;border-radius:4px;background:none;border:0;padding:0;outline-offset:2px}
+.dd-row .lab{font-size:.72rem;color:var(--muted);text-align:right;padding-right:.4rem;align-self:center;font-variant-numeric:tabular-nums}
+.dd-row .c{aspect-ratio:1;border-radius:2px}
+.dd-row.cur{box-shadow:0 0 0 2px var(--mark)}
+.dd-row.cur .lab{color:var(--ink);font-weight:700}
+.dd-row.done .c{opacity:.55}
+
+/* Picture */
+.drop{display:flex;flex-direction:column;align-items:center;gap:.4rem;text-align:center;border:2px dashed var(--line);border-radius:12px;padding:1.75rem 1rem;cursor:pointer;width:100%;background:none}
+.drop.over{border-color:var(--weft);background:var(--over-chip)}
+.drop svg{width:2.25rem;height:2.25rem;color:var(--muted)}
+.drop strong{font-size:1.1rem}
+.drop span{color:var(--muted);font-size:.92rem;max-width:32ch}
+.pic-top{display:grid;grid-template-columns:6rem 1fr;gap:.9rem;align-items:start}
+.pic-top img{width:100%;border-radius:6px;display:block}
+.palette{list-style:none;margin:0;padding:0;display:grid;gap:.4rem}
+.palette li{display:flex;align-items:center;gap:.55rem}
+.palette .sw{width:1.5rem;height:1.5rem;border-radius:6px}
+.palette small{color:var(--muted);margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+.error{color:var(--warn);background:var(--warn-bg);border-radius:10px;padding:.6rem .75rem;margin:.75rem 0 0}
+.pv-wrap{overflow:auto;max-height:70vh;border-radius:6px}
+#pv{display:block;cursor:pointer}
+
+/* Math */
+details.panel summary{cursor:pointer;font-weight:600;font-size:1.05rem;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.panel summary::-webkit-details-marker{display:none}
+details[open] summary svg{transform:rotate(180deg)}
+dl.math{margin:1rem 0 0;display:grid;gap:.85rem}
+dl.math div{border-top:1px solid var(--line);padding-top:.75rem}
+dl.math dt{font-weight:600}
+dl.math dd{margin:.15rem 0 0;color:var(--muted)}
+dl.math dd strong{color:var(--ink)}
+
+/* Bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding:.6rem 1rem calc(.6rem + env(safe-area-inset-bottom,0px))}
+.bar-in{max-width:44rem;margin:0 auto;display:grid;grid-template-columns:auto 1fr auto;gap:.75rem;align-items:center}
+.bar .label{text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
+.bar .btn{min-height:3rem;padding:.5rem 1rem}
+.bar .btn.primary{padding:.5rem 1.25rem}
+.bar .btn[disabled]{opacity:.4;cursor:default}
+@media (prefers-reduced-motion:no-preference){.dd-row,.btn,.pat-card{transition:box-shadow .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Weaving helper</h1>
+    <p>Set your warp, pick a pattern or a picture, then weave one row at a time.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="warpH">
+    <div class="warp-row">
+      <div>
+        <h2 id="warpH">Warp threads</h2>
+        <p class="hint" id="warpFit"></p>
+      </div>
+      <div class="stepper">
+        <button type="button" id="warpMinus" aria-label="Fewer warps"><svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14"/></svg></button>
+        <input id="warpOut" type="number" inputmode="numeric" min="4" max="120" aria-label="Number of warp threads">
+        <button type="button" id="warpPlus" aria-label="More warps"><svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg></button>
+      </div>
+    </div>
+  </section>
+
+  <div class="tabs" role="tablist" aria-label="What to weave">
+    <button type="button" role="tab" id="tabPat" aria-controls="patMode"><svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"/></svg>Patterns</button>
+    <button type="button" role="tab" id="tabPic" aria-controls="picMode"><svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>From a picture</button>
+  </div>
+
+  <!-- PATTERNS -->
+  <div id="patMode" role="tabpanel" aria-labelledby="tabPat">
+    <section class="panel" aria-labelledby="patH">
+      <div class="panel-head">
+        <h2 id="patH">Pattern</h2>
+        <button class="link" id="patToggle" type="button">Change</button>
+      </div>
+      <div id="patCurrent" class="pat-current"></div>
+      <div class="editor" id="patPicker" hidden>
+        <div class="pat-grid" id="patGrid"></div>
+        <div class="settings">
+          <div id="startWrap">
+            <p class="field-label">Start on</p>
+            <div class="btns" id="startBtns"></div>
+          </div>
+          <div>
+            <p class="field-label">Yarn colors</p>
+            <div class="colors">
+              <label><input type="color" id="colA"> Color A</label>
+              <label><input type="color" id="colB"> Color B</label>
+            </div>
+          </div>
+          <div>
+            <p class="field-label">Direction</p>
+            <div class="seg" id="mirrorSeg">
+              <button type="button" data-v="0">As shown</button>
+              <button type="button" data-v="1">Mirrored</button>
+            </div>
+          </div>
+          <div>
+            <p class="field-label">Row 1 starts at the</p>
+            <div class="seg" id="sideSeg">
+              <button type="button" data-v="left">Left edge</button>
+              <button type="button" data-v="right">Right edge</button>
+            </div>
+          </div>
+        </div>
+        <div><button class="btn primary" id="patDone" type="button">Start weaving</button></div>
+      </div>
+    </section>
+
+    <section class="panel hero" id="rowCard" aria-live="polite"></section>
+
+    <section class="panel" aria-labelledby="ddH">
+      <h2 id="ddH">Drawdown</h2>
+      <p class="hint">How the cloth will look. Row 1 is at the bottom, like on the loom. Tap a row to jump to it.</p>
+      <div class="dd-wrap"><div class="dd" id="dd"></div></div>
+    </section>
+
+    <details class="panel" id="math">
+      <summary>The math <svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/></svg></summary>
+      <dl class="math" id="mathBody"></dl>
+    </details>
+  </div>
+
+  <!-- PICTURE -->
+  <div id="picMode" role="tabpanel" aria-labelledby="tabPic" hidden>
+    <section class="panel" aria-labelledby="picH">
+      <div class="panel-head">
+        <h2 id="picH">Picture</h2>
+        <button class="link" id="picReplace" type="button" hidden>Use another</button>
+      </div>
+      <label class="drop" id="drop" for="file">
+        <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>
+        <strong>Add a picture</strong>
+        <span>Bold shapes on a plain background work best, like a single flower. Your picture stays on this device.</span>
+      </label>
+      <input type="file" id="file" accept="image/*" hidden>
+      <p class="error" id="picError" hidden></p>
+      <div id="picSetup" hidden>
+        <div class="pic-top">
+          <img id="picThumb" alt="Your picture">
+          <div>
+            <p class="field-label" id="picSize"></p>
+            <ul class="palette" id="palette"></ul>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:1rem" id="picHow"></p>
+        <div class="settings">
+          <div>
+            <p class="field-label">Weave</p>
+            <div class="seg" id="weaveSeg">
+              <button type="button" data-v="twill22">2/2 twill</button>
+              <button type="button" data-v="plain">Plain weave</button>
+            </div>
+          </div>
+          <div>
+            <p class="field-label">Colors</p>
+            <div class="stepper">
+              <button type="button" id="kMinus" aria-label="Fewer colors"><svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14"/></svg></button>
+              <output id="kOut"></output>
+              <button type="button" id="kPlus" aria-label="More colors"><svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg></button>
+            </div>
+          </div>
+          <div>
+            <p class="field-label">Rows</p>
+            <div class="stepper">
+              <button type="button" id="hMinus" aria-label="Fewer rows"><svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14"/></svg></button>
+              <output id="hOut"></output>
+              <button type="button" id="hPlus" aria-label="More rows"><svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg></button>
+            </div>
+            <button class="link" id="hAuto" type="button" style="margin:.4rem 0 0" hidden>Match the picture’s shape</button>
+          </div>
+          <div>
+            <p class="field-label">Cleanup</p>
+            <label class="check"><input type="checkbox" id="tidy"> Remove single-square specks</label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel hero" id="picRowCard" aria-live="polite" hidden></section>
+
+    <section class="panel" id="pvPanel" aria-labelledby="pvH" hidden>
+      <h2 id="pvH">Woven preview</h2>
+      <p class="hint">Each square is one warp by one row. Row 1 is at the bottom. Tap a row to jump to it.</p>
+      <div class="pv-wrap" id="pvWrap"><canvas id="pv"></canvas></div>
+    </section>
+  </div>
+</div>
+
+<nav class="bar" aria-label="Row controls">
+  <div class="bar-in">
+    <button class="btn" id="prev" type="button" aria-label="Previous row"><svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>Back</button>
+    <div class="label" id="barLabel">Row 1</div>
+    <button class="btn primary" id="next" type="button">Row done<svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg></button>
+  </div>
+</nav>
+
+<script>
+const KEY = 'weaving-helper-v3';
+const ICON = {
+  right: '<svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 8.25 21 12m0 0-3.75 3.75M21 12H3"/></svg>',
+  left: '<svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 15.75 3 12m0 0 3.75-3.75M3 12h18"/></svg>',
+  warn: '<svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg>',
+  reset: '<svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>',
+  check: '<svg class="i" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>'
+};
+
+/* ---------- Helpers ---------- */
+const $ = id => document.getElementById(id);
+const mod = (a, n) => ((a % n) + n) % n;
+const gcd = (a, b) => b ? gcd(b, a % b) : a;
+const lcm = (a, b) => a / gcd(a, b) * b;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const word = (over, n) => (over ? 'Over ' : 'Under ') + n;
+const fromStrings = rows => rows.map(s => [...s].map(c => c === '#'));
+const threaded = (t, u) => u.map(ur => t.map(tw => mod(tw - ur, 4) < 2));
+
+/* ---------- Patterns (row 1 first; # = weft on top) ---------- */
+const PLAIN = fromStrings(['#.', '.#']);
+const TWILL = fromStrings(['##..', '#..#', '..##', '.##.']);
+const A = 0, B = 1;
+const PATTERNS = [
+  { id: 'plain', name: 'Plain weave', desc: 'Over 1, under 1. The simplest, sturdiest cloth.', tile: PLAIN },
+  { id: 'basket', name: 'Basket weave', desc: 'Over 2, under 2, with each row woven twice before it switches.', tile: fromStrings(['##..', '##..', '..##', '..##']) },
+  { id: 'twill22', name: '2/2 twill', desc: 'Over 2, under 2, shifting one warp each row to make a diagonal.', tile: TWILL },
+  { id: 'twill21', name: '2/1 twill', desc: 'Over 2, under 1. A steeper diagonal with more weft showing.', tile: fromStrings(['##.', '#.#', '.##']) },
+  { id: 'chevron', name: 'Chevron', desc: '2/2 twill that turns back and forth across the warps, making zigzags.', tile: threaded([0, 1, 2, 3, 2, 1], [0, 1, 2, 3]) },
+  { id: 'arrowL', name: 'Arrow left', desc: '2/2 twill that turns back every 5 rows, making arrows that point left.', tile: threaded([0, 1, 2, 3], [0, 1, 2, 3, 4, 5, 4, 3, 2, 1]).map(r => [...r].reverse()) },
+  { id: 'arrowR', name: 'Arrow right', desc: '2/2 twill that turns back every 5 rows, making arrows that point right.', tile: threaded([0, 1, 2, 3], [0, 1, 2, 3, 4, 5, 4, 3, 2, 1]) },
+  { id: 'herring', name: 'Herringbone', desc: '2/2 twill that flips direction with a clean break, like fish bones.', tile: threaded([0, 1, 2, 3, 0, 1, 2, 3, 1, 0, 3, 2, 1, 0, 3, 2], [0, 1, 2, 3]) },
+  { id: 'diamond', name: 'Diamond', desc: 'A chevron that also turns back up the rows, making diamonds.', tile: threaded([0, 1, 2, 3, 2, 1], [0, 1, 2, 3, 2, 1]) },
+  { id: 'hounds', name: 'Houndstooth', desc: '2/2 twill with 4 of one color, 4 of the other, in both warp and weft.', tile: TWILL, warp: [A, A, A, A, B, B, B, B], weft: [A, A, A, A, B, B, B, B] },
+  { id: 'logcabin', name: 'Log cabin', desc: 'Plain weave with alternating colors that switch every 6 threads, making blocks of lines.', tile: PLAIN, warp: [A, B, A, B, A, B, B, A, B, A, B, A], weft: [A, B, A, B, A, B, B, A, B, A, B, A] }
+];
+
+/* ---------- State ---------- */
+const DEFAULTS = { warps: 24, mode: 'pat', pat: 'twill22', start: 0, mirror: false, side: 'left', colors: ['#2E4C8F', '#E4DCC8'], row: 1,
+  pic: { src: null, rows: 0, k: 4, tidy: true, row: 1, weave: 'twill22' } };
+let saved = null;
+try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+if (!saved) {
+  try { const old = JSON.parse(localStorage.getItem('twill-helper-v2') || 'null'); if (old) saved = { warps: old.warps, row: old.row }; } catch (e) {}
+}
+const S = Object.assign({}, DEFAULTS, saved || {});
+S.pic = Object.assign({}, DEFAULTS.pic, (saved && saved.pic) || {});
+let picking = !saved;
+let PIC = null;
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+/* ---------- Pattern engine ---------- */
+const pat = () => PATTERNS.find(p => p.id === S.pat) || PATTERNS[2];
+const tile = (p = pat()) => S.mirror ? p.tile.map(r => [...r].reverse()) : p.tile;
+const tileRow = (r, p = pat()) => { const t = tile(p); return t[mod(S.start + r - 1, t.length)]; };
+const overAt = (w, r, p = pat()) => { const row = tileRow(r, p); return row[mod(w, row.length)]; };
+const warpKey = (w, p = pat()) => p.warp ? p.warp[mod(w, p.warp.length)] : B;
+const weftKey = (r, p = pat()) => p.weft ? p.weft[mod(S.start + r - 1, p.weft.length)] : A;
+const cellColor = (w, r, p = pat()) => overAt(w, r, p) ? S.colors[weftKey(r, p)] : S.colors[warpKey(w, p)];
+const rowStates = r => Array.from({ length: S.warps }, (_, w) => overAt(w, r));
+const period = (p = pat()) => lcm(p.tile.length, p.weft ? p.weft.length : 1);
+const repWidth = (p = pat()) => lcm(p.tile[0].length, p.warp ? p.warp.length : 1);
+const goesRight = r => (S.side === 'left') === (r % 2 === 1);
+const colorName = k => k === A ? 'Color A' : 'Color B';
+
+function runs(states, ltr) {
+  const idx = [...states.keys()]; if (!ltr) idx.reverse();
+  const out = [];
+  for (const i of idx) {
+    const o = states[i], last = out[out.length - 1];
+    if (last && last.over === o) { last.n++; last.to = i + 1; } else out.push({ over: o, n: 1, from: i + 1, to: i + 1 });
+  }
+  return out;
+}
+function tileRowName(k, p = pat()) {
+  const t = tile(p), row = t[k];
+  if (row.length > 6) return `Row ${k + 1}`;
+  return runs(row, true).map((x, j) => j ? word(x.over, x.n).toLowerCase() : word(x.over, x.n)).join(', ');
+}
+function previewSVG(p, cols = 12, rows = 8) {
+  const s = 6; let out = `<svg viewBox="0 0 ${cols * s} ${rows * s}" aria-hidden="true" shape-rendering="crispEdges">`;
+  const t = S.mirror ? p.tile.map(r => [...r].reverse()) : p.tile;
+  for (let r = 0; r < rows; r++) for (let w = 0; w < cols; w++) {
+    const row = t[r % t.length], over = row[w % row.length];
+    const c = over ? S.colors[p.weft ? p.weft[r % p.weft.length] : A] : S.colors[p.warp ? p.warp[w % p.warp.length] : B];
+    out += `<rect x="${w * s}" y="${(rows - 1 - r) * s}" width="${s}" height="${s}" fill="${c}" stroke="rgba(0,0,0,.12)" stroke-width=".5"/>`;
+  }
+  return out + '</svg>';
+}
+function rle(arr) { const o = []; for (const v of arr) { const l = o[o.length - 1]; if (l && l.v === v) l.n++; else o.push({ v, n: 1 }); } return o; }
+
+/* ---------- Render: shared ---------- */
+function renderWarp() {
+  if (document.activeElement !== $('warpOut')) $('warpOut').value = S.warps;
+  if (S.mode === 'pat') {
+    const R = repWidth();
+    $('warpFit').textContent = S.warps % R === 0 ? `${S.warps / R} repeats of ${R}, clean edges` : `${Math.floor(S.warps / R)} repeats of ${R}, plus ${S.warps % R} extra`;
+  } else {
+    $('warpFit').textContent = `Your picture will be ${S.warps} squares wide`;
+  }
+}
+function renderTabs() {
+  $('tabPat').setAttribute('aria-selected', S.mode === 'pat');
+  $('tabPic').setAttribute('aria-selected', S.mode === 'pic');
+  $('patMode').hidden = S.mode !== 'pat';
+  $('picMode').hidden = S.mode !== 'pic';
+}
+function renderBar() {
+  const prev = $('prev'), next = $('next');
+  if (S.mode === 'pat') {
+    $('barLabel').textContent = `Row ${S.row}`;
+    prev.disabled = S.row <= 1; next.disabled = false;
+  } else if (PIC) {
+    $('barLabel').textContent = S.pic.row > PIC.H ? 'Finished' : `Row ${S.pic.row}`;
+    prev.disabled = S.pic.row <= 1; next.disabled = S.pic.row > PIC.H;
+  } else {
+    $('barLabel').textContent = ''; prev.disabled = true; next.disabled = true;
+  }
+}
+
+/* ---------- Render: patterns ---------- */
+function renderPattern() {
+  const p = pat();
+  let setup = '';
+  if (p.warp) {
+    const order = rle(p.warp).map(x => `${x.n} ${colorName(x.v)}`).join(', ');
+    setup = `<p class="setup">Wind the warp in this order, then repeat: ${order}.</p>`;
+  }
+  $('patCurrent').innerHTML = `${previewSVG(p, 16, 12)}<div><h3>${p.name}</h3><p>${p.desc}</p>${setup}</div>`;
+  $('patPicker').hidden = !picking;
+  $('patToggle').textContent = picking ? 'Done' : 'Change';
+  $('patGrid').innerHTML = PATTERNS.map(q => `<button type="button" class="pat-card" data-pat="${q.id}" aria-pressed="${q.id === p.id}">${previewSVG(q, 12, 10)}${q.name}</button>`).join('');
+  const T = tile(p).length;
+  $('startWrap').hidden = T < 2;
+  $('startBtns').innerHTML = Array.from({ length: T }, (_, k) => `<button type="button" class="btn" data-start="${k}" aria-pressed="${k === S.start}">${tileRowName(k, p)}</button>`).join('');
+  $('colA').value = S.colors[0]; $('colB').value = S.colors[1];
+  for (const b of $('mirrorSeg').children) b.setAttribute('aria-pressed', (b.dataset.v === '1') === S.mirror);
+  for (const b of $('sideSeg').children) b.setAttribute('aria-pressed', b.dataset.v === S.side);
+}
+
+function renderRow() {
+  const p = pat(), r = S.row, W = S.warps, st = rowStates(r), ltr = goesRight(r), P = period(p), T = tile(p).length;
+  const rs = runs(st, ltr), repRow = ((r - 1) % P) + 1, cycleStart = r - repRow + 1;
+  const repList = P > 1 && P <= 12 ? `<ol class="rep" aria-label="The repeat">${Array.from({ length: P }, (_, j) => {
+    const k = mod(S.start + cycleStart + j - 1, T);
+    const label = p.weft ? `${tileRowName(k, p)}${tileRowName(k, p).startsWith('Row') ? '' : ''} in ${colorName(weftKey(cycleStart + j, p))}` : tileRowName(k, p);
+    return `<li class="${j + 1 === repRow ? 'now' : ''}">${j + 1}. ${label}</li>`;
+  }).join('')}</ol>` : '';
+  const weftC = S.colors[weftKey(r, p)];
+  const showAll = W <= 32;
+  const strip = st.map((o, w) => `<div class="w ${o ? 'over' : 'under'}"><span style="background:${S.colors[warpKey(w, p)]}"></span></div>`).join('');
+  const nums = st.map((_, i) => { const n = i + 1; return `<span>${showAll || n === 1 || n % 5 === 0 || n === W ? n : ''}</span>`; }).join('');
+  let tip = '';
+  if (r > 1) {
+    const e = ltr ? 0 : W - 1, prev = rowStates(r - 1);
+    if (prev[e] === st[e]) tip = `<div class="tip">${ICON.warn}<span>Edge check: this row starts the same way the last row ended, so warp ${e + 1} won’t get caught. Wrap the weft once around warp ${e + 1} before you start.</span></div>`;
+  }
+  const cols = `grid-template-columns:repeat(${W},minmax(10px,1fr))`;
+  $('rowCard').innerHTML = `
+    <div class="row-head">
+      <span class="row-num">Row ${r}</span>
+      <span class="dir">${ltr ? 'Left to right ' + ICON.right : ICON.left + ' Right to left'}</span>
+    </div>
+    <p class="sub">${P > 1 ? `Row ${repRow} of the ${P}-row repeat. ` : ''}<span class="weft-tag"><span class="sw" style="background:${weftC}"></span>Weft: ${colorName(weftKey(r, p))}</span></p>
+    ${repList}
+    <div class="strip-wrap">
+      <div class="strip" style="${cols}"><div class="weft" style="background:${weftC}"></div>${strip}</div>
+      <div class="nums" style="${cols}">${nums}</div>
+    </div>
+    <ol class="steps" aria-label="Steps for row ${r}, in the order you weave them">
+      ${rs.map(x => `<li class="${x.over ? 'over' : 'under'}"><b>${word(x.over, x.n)}</b><small>${x.n === 1 ? 'warp ' + x.from : 'warps ' + x.from + '–' + x.to}</small></li>`).join('')}
+    </ol>
+    ${tip}
+    ${r > 1 ? `<button class="btn restart" type="button" data-restart="pat">${ICON.reset}Back to row 1</button>` : ''}`;
+}
+
+function renderDraw() {
+  const W = S.warps, start = Math.max(1, S.row - 9), end = start + 15;
+  const tmpl = `grid-template-columns:2rem repeat(${W},minmax(9px,1fr))`;
+  let html = '';
+  for (let r = end; r >= start; r--) {
+    let cells = '';
+    for (let w = 0; w < W; w++) cells += `<span class="c" style="background:${cellColor(w, r)}"></span>`;
+    html += `<button type="button" class="dd-row${r === S.row ? ' cur' : ''}${r < S.row ? ' done' : ''}" style="${tmpl}" data-row="${r}" aria-label="Jump to row ${r}"><span class="lab">${r}</span>${cells}</button>`;
+  }
+  $('dd').innerHTML = html;
+}
+
+function renderMath() {
+  const p = pat(), W = S.warps, Wt = p.tile[0].length, R = repWidth(p), P = period(p);
+  const full = Math.floor(W / R), rem = W % R;
+  let overs = 0, total = 0, longO = 0, longU = 0;
+  for (let r = 1; r <= P; r++) {
+    const st = rowStates(r); overs += st.filter(Boolean).length; total += st.length;
+    for (const x of runs(st, true)) { if (x.over) longO = Math.max(longO, x.n); else longU = Math.max(longU, x.n); }
+  }
+  const pct = Math.round(overs / total * 100);
+  const near = [];
+  for (let d = 1; d <= R && near.length < 2; d++) { if ((W - d) % R === 0 && W - d > 0) near.push(W - d); if ((W + d) % R === 0) near.push(W + d); }
+  const items = [
+    ['Pattern width', R === Wt ? `<strong>${R} warps</strong> per repeat.` : `The weave repeats every ${Wt} warps and the colors every ${p.warp.length}, so the full pattern is <strong>${R} warps</strong> wide.`],
+    [`Across your ${W} warps`, rem === 0
+      ? `${W} ÷ ${R} = <strong>${full} full repeat${full > 1 ? 's' : ''}</strong>, nothing left over. Both edges finish cleanly.`
+      : `${W} ÷ ${R} = <strong>${full} full repeat${full === 1 ? '' : 's'} with ${rem} warp${rem > 1 ? 's' : ''} left over</strong>. The pattern carries on into those, so the two edges won’t match. ${near.length ? `For even repeats you’d want ${near.sort((a, b) => a - b).join(' or ')} warps.` : ''}`],
+    ['Rows before it repeats', `<strong>${P} row${P > 1 ? 's' : ''}</strong>. Row ${P + 1} is the same as row 1.`],
+    ['Which side shows more', pct === 50
+      ? `<strong>Balanced.</strong> Weft is on top half the time, so warp and weft show equally.`
+      : pct > 50 ? `<strong>Weft shows more</strong> on the side facing you, about ${pct}%. The back will be mostly warp.`
+      : `<strong>Warp shows more</strong> on the side facing you. Weft is on top about ${pct}% of the time.`],
+    ['Longest float', `Weft skips up to <strong>${longO} warp${longO > 1 ? 's' : ''}</strong> on top and <strong>${longU}</strong> underneath.${Math.max(longO, longU) >= 4 ? ' Floats of 4 or more can snag; fine for a wall hanging, risky for something worn.' : ''}`]
+  ];
+  $('mathBody').innerHTML = items.map(([t, d]) => `<div><dt>${t}</dt><dd>${d}</dd></div>`).join('');
+}
+
+/* ---------- Picture engine ---------- */
+function loadImg(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
+function readFile(f) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); }); }
+const hex = c => '#' + c.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+
+function nameColor([r, g, b]) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  const s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  let h = 0;
+  if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = mod(h * 60, 360); }
+  if (l < 0.13) return 'Black';
+  if (l > 0.9 && s < 0.5) return 'White';
+  if (s < 0.14) return l < 0.35 ? 'Dark gray' : l > 0.7 ? 'Light gray' : 'Gray';
+  let n = h < 14 ? 'red' : h < 40 ? 'orange' : h < 66 ? 'yellow' : h < 90 ? 'yellow-green' : h < 160 ? 'green' : h < 195 ? 'teal' : h < 255 ? 'blue' : h < 290 ? 'purple' : h < 352 ? 'pink' : 'red';
+  if ((n === 'orange' || n === 'red' || n === 'yellow') && l < 0.42 && s < 0.75) n = 'brown';
+  const pre = l < 0.3 ? 'dark ' : l > 0.72 ? 'light ' : '';
+  const full = pre + n;
+  return full[0].toUpperCase() + full.slice(1);
+}
+
+function kmeans(px, n, K) {
+  let seed = 1234567;
+  const rnd = () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const C = new Float32Array(K * 3), D = new Float32Array(n).fill(Infinity), L = new Uint8Array(n);
+  const dist = (i, k) => { const a = px[i * 3] - C[k * 3], b = px[i * 3 + 1] - C[k * 3 + 1], c = px[i * 3 + 2] - C[k * 3 + 2]; return a * a + b * b + c * c; };
+  let i0 = Math.floor(rnd() * n); C[0] = px[i0 * 3]; C[1] = px[i0 * 3 + 1]; C[2] = px[i0 * 3 + 2];
+  for (let k = 1; k < K; k++) {
+    let sum = 0;
+    for (let i = 0; i < n; i++) { const d = dist(i, k - 1); if (d < D[i]) D[i] = d; sum += D[i]; }
+    let t = rnd() * sum, j = 0;
+    for (; j < n - 1; j++) { t -= D[j]; if (t <= 0) break; }
+    C[k * 3] = px[j * 3]; C[k * 3 + 1] = px[j * 3 + 1]; C[k * 3 + 2] = px[j * 3 + 2];
+  }
+  for (let it = 0; it < 16; it++) {
+    for (let i = 0; i < n; i++) { let best = 0, bd = Infinity; for (let k = 0; k < K; k++) { const d = dist(i, k); if (d < bd) { bd = d; best = k; } } L[i] = best; }
+    const sum = new Float64Array(K * 3), cnt = new Uint32Array(K);
+    for (let i = 0; i < n; i++) { const k = L[i]; cnt[k]++; sum[k * 3] += px[i * 3]; sum[k * 3 + 1] += px[i * 3 + 1]; sum[k * 3 + 2] += px[i * 3 + 2]; }
+    for (let k = 0; k < K; k++) if (cnt[k]) { C[k * 3] = sum[k * 3] / cnt[k]; C[k * 3 + 1] = sum[k * 3 + 1] / cnt[k]; C[k * 3 + 2] = sum[k * 3 + 2] / cnt[k]; }
+  }
+  return { C, L };
+}
+
+function tidyGrid(g, W, H) {
+  for (let pass = 0; pass < 2; pass++) {
+    for (let y = 0; y < H; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; if (g[i] !== g[i - 1] && g[i - 1] === g[i + 1]) g[i] = g[i - 1]; }
+    for (let x = 0; x < W; x++) for (let y = 1; y < H - 1; y++) { const i = y * W + x; if (g[i] !== g[i - W] && g[i - W] === g[i + W]) g[i] = g[i - W]; }
+  }
+}
+
+async function processPic() {
+  if (!S.pic.src) { PIC = null; return; }
+  const img = await loadImg(S.pic.src);
+  const W = S.warps;
+  const autoH = Math.max(4, Math.round(W * img.height / img.width));
+  const H = S.pic.rows || autoH;
+  const f = 4, cw = W * f, ch = H * f;
+  const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+  const x = cv.getContext('2d', { willReadFrequently: true });
+  x.fillStyle = '#ffffff'; x.fillRect(0, 0, cw, ch);
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  x.drawImage(img, 0, 0, cw, ch);
+  const d = x.getImageData(0, 0, cw, ch).data, n = W * H, px = new Float32Array(n * 3);
+  for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) {
+    let r = 0, g = 0, b = 0;
+    for (let dy = 0; dy < f; dy++) for (let dx = 0; dx < f; dx++) { const i = ((yy * f + dy) * cw + xx * f + dx) * 4; r += d[i]; g += d[i + 1]; b += d[i + 2]; }
+    const o = (yy * W + xx) * 3, q = f * f; px[o] = r / q; px[o + 1] = g / q; px[o + 2] = b / q;
+  }
+  const K = Math.max(2, Math.min(8, S.pic.k));
+  const { C, L } = kmeans(px, n, K);
+  if (S.pic.tidy) tidyGrid(L, W, H);
+  const cnt = new Array(K).fill(0); for (const v of L) cnt[v]++;
+  const order = [...Array(K).keys()].filter(k => cnt[k] > 0).sort((a, b) => cnt[b] - cnt[a]);
+  const remap = new Uint8Array(K); order.forEach((k, j) => remap[k] = j);
+  const grid = L.map(v => remap[v]);
+  const used = {};
+  const palette = order.map(k => {
+    const rgb = [C[k * 3], C[k * 3 + 1], C[k * 3 + 2]];
+    let name = nameColor(rgb); used[name] = (used[name] || 0) + 1; if (used[name] > 1) name += ' ' + used[name];
+    return { rgb, hex: hex(rgb), name, count: cnt[k] };
+  });
+  PIC = { W, H, autoH, grid, palette };
+  if (S.pic.row > H + 1) S.pic.row = H + 1;
+}
+async function refreshPic() {
+  try { await processPic(); $('picError').hidden = true; }
+  catch (e) { PIC = null; showPicError('That picture couldn’t be read. Try a JPG or PNG.'); }
+  update();
+}
+function showPicError(msg) { $('picError').textContent = msg; $('picError').hidden = false; }
+
+async function handleFile(file) {
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showPicError('That file isn’t a picture. Try a JPG or PNG.'); return; }
+  try {
+    const url = await readFile(file);
+    const img = await loadImg(url);
+    const s = Math.min(1, 320 / Math.max(img.width, img.height));
+    const cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(img.width * s)); cv.height = Math.max(1, Math.round(img.height * s));
+    const x = cv.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, cv.width, cv.height); x.drawImage(img, 0, 0, cv.width, cv.height);
+    S.pic.src = cv.toDataURL('image/jpeg', 0.9); S.pic.rows = 0; S.pic.row = 1;
+    await refreshPic();
+  } catch (e) { showPicError('That picture couldn’t be read. Try a JPG or PNG.'); }
+}
+
+/* ---------- Render: picture ---------- */
+function renderPic() {
+  const has = !!(S.pic.src && PIC);
+  $('drop').hidden = has;
+  $('picReplace').hidden = !has;
+  $('picSetup').hidden = !has;
+  $('picRowCard').hidden = !has;
+  $('pvPanel').hidden = !has;
+  if (!has) return;
+  $('picThumb').src = S.pic.src;
+  $('picSize').textContent = `${PIC.W} warps by ${PIC.H} rows, ${PIC.palette.length} yarn colors`;
+  $('palette').innerHTML = PIC.palette.map(c => `<li><span class="sw" style="background:${c.hex}"></span>${esc(c.name)}<small>${c.count} squares</small></li>`).join('');
+  $('kOut').textContent = S.pic.k;
+  $('hOut').textContent = PIC.H;
+  $('hAuto').hidden = !S.pic.rows || S.pic.rows === PIC.autoH;
+  $('tidy').checked = S.pic.tidy;
+  for (const b of $('weaveSeg').children) b.setAttribute('aria-pressed', b.dataset.v === S.pic.weave);
+  $('picHow').textContent = S.pic.weave === 'plain'
+    ? 'Pictures weave as tapestry: plain weave packed down so the weft hides the warp. Weave each color back and forth in its own section.'
+    : 'Pictures weave as twill tapestry: 2/2 twill packed down so the weft hides the warp. Weave each color back and forth in its own section, keeping the twill going row by row.';
+  renderPicRow();
+  renderPreview();
+}
+
+const picOver = (x, r) => S.pic.weave === 'plain' ? mod(x + r - 1, 2) === 0 : TWILL[mod(r - 1, 4)][mod(x, 4)];
+const segStart = (ov, s) => { const o = ov[s.from - 1]; let n = 0; while (s.from - 1 + n < s.to && ov[s.from - 1 + n] === o) n++; return word(o, n).toLowerCase(); };
+function renderPicRow() {
+  const r = S.pic.row, card = $('picRowCard'), W = PIC.W;
+  if (r > PIC.H) {
+    card.innerHTML = `<div class="row-head"><span class="row-num">Finished</span></div><p class="sub">All ${PIC.H} rows are woven. Nice work.</p><button class="btn restart" type="button" data-restart="pic">${ICON.reset}Back to row 1</button>`;
+    return;
+  }
+  const y = PIC.H - r, row = Array.from({ length: W }, (_, x) => PIC.grid[y * W + x]);
+  const ov = Array.from({ length: W }, (_, x) => picOver(x, r));
+  const segs = []; row.forEach((c, i) => { const l = segs[segs.length - 1]; if (l && l.c === c) { l.n++; l.to = i + 1; } else segs.push({ c, n: 1, from: i + 1, to: i + 1 }); });
+  const showAll = W <= 32;
+  const cols = `grid-template-columns:repeat(${W},minmax(10px,1fr))`;
+  const nums = row.map((_, i) => { const n = i + 1; return `<span>${showAll || n === 1 || n % 5 === 0 || n === W ? n : ''}</span>`; }).join('');
+  const changed = r > 1 ? (() => { const py = PIC.H - r + 1; let same = true; for (let x = 0; x < W; x++) if (PIC.grid[py * W + x] !== row[x]) { same = false; break; } return same; })() : false;
+  card.innerHTML = `
+    <div class="row-head">
+      <span class="row-num">Row ${r}<small>of ${PIC.H}</small></span>
+      <span class="dir">${segs.length} section${segs.length > 1 ? 's' : ''}</span>
+    </div>
+    <p class="sub">${changed ? 'Same colors as the last row.' : 'Weave each section across and back with its color.'}</p>
+    <div class="strip-wrap">
+      <div class="pstrip" style="${cols}">${row.map((c, x) => `<div class="w ${ov[x] ? 'over' : 'under'}"><i style="background:${PIC.palette[c].hex}"></i><span></span></div>`).join('')}</div>
+      <div class="nums" style="${cols}">${nums}</div>
+    </div>
+    <ol class="steps" aria-label="Color sections for row ${r}, left to right">
+      ${segs.map(s => `<li class="seg-c"><b><span class="sw" style="background:${PIC.palette[s.c].hex}"></span>${esc(PIC.palette[s.c].name)}</b><small>${s.n === 1 ? 'warp ' + s.from : 'warps ' + s.from + '–' + s.to}, start ${segStart(ov, s)}</small></li>`).join('')}
+    </ol>
+    ${r > 1 ? `<button class="btn restart" type="button" data-restart="pic">${ICON.reset}Back to row 1</button>` : ''}`;
+}
+
+function renderPreview() {
+  const cv = $('pv'), wrap = $('pvWrap'), W = PIC.W, H = PIC.H;
+  const avail = Math.max(200, wrap.clientWidth || 320);
+  const cs = Math.max(6, Math.floor(avail / W));
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = W * cs * dpr; cv.height = H * cs * dpr;
+  cv.style.width = W * cs + 'px'; cv.style.height = H * cs + 'px';
+  const x = cv.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  for (let yy = 0; yy < H; yy++) for (let xx = 0; xx < W; xx++) {
+    x.fillStyle = PIC.palette[PIC.grid[yy * W + xx]].hex; x.fillRect(xx * cs, yy * cs, cs, cs);
+  }
+  x.strokeStyle = 'rgba(0,0,0,.08)'; x.lineWidth = 1;
+  for (let xx = 1; xx < W; xx++) { x.beginPath(); x.moveTo(xx * cs + .5, 0); x.lineTo(xx * cs + .5, H * cs); x.stroke(); }
+  const r = S.pic.row;
+  if (r <= H) {
+    const y = (H - r) * cs;
+    x.fillStyle = 'rgba(255,255,255,.35)'; x.fillRect(0, 0, W * cs, y);
+    const mark = getComputedStyle(document.documentElement).getPropertyValue('--mark').trim() || '#D9A521';
+    x.strokeStyle = mark; x.lineWidth = 3; x.strokeRect(1.5, y + 1.5, W * cs - 3, cs - 3);
+    wrap.scrollTop = Math.max(0, y - wrap.clientHeight / 2);
+  }
+  cv.dataset.cs = cs;
+}
+
+/* ---------- Update ---------- */
+function update() {
+  save(); renderTabs(); renderWarp();
+  if (S.mode === 'pat') { renderPattern(); renderRow(); renderDraw(); renderMath(); }
+  else renderPic();
+  renderBar();
+}
+
+/* ---------- Events ---------- */
+function setWarps(v) { S.warps = Math.min(120, Math.max(4, v)); if (S.pic.src) refreshPic(); else update(); }
+$('warpMinus').onclick = () => setWarps(S.warps - 1);
+$('warpPlus').onclick = () => setWarps(S.warps + 1);
+$('warpOut').onchange = e => { const v = parseInt(e.target.value, 10); setWarps(isNaN(v) ? S.warps : v); e.target.value = S.warps; };
+$('tabPat').onclick = () => { S.mode = 'pat'; update(); };
+$('tabPic').onclick = () => { S.mode = 'pic'; if (S.pic.src && !PIC) refreshPic(); else update(); };
+
+$('patToggle').onclick = () => { picking = !picking; update(); };
+$('patDone').onclick = () => { picking = false; update(); $('rowCard').scrollIntoView({ block: 'start' }); };
+$('patGrid').onclick = e => { const b = e.target.closest('[data-pat]'); if (!b) return; S.pat = b.dataset.pat; S.start = 0; S.row = 1; update(); };
+$('startBtns').onclick = e => { const b = e.target.closest('[data-start]'); if (!b) return; S.start = +b.dataset.start; S.row = 1; update(); };
+$('mirrorSeg').onclick = e => { const b = e.target.closest('button'); if (b) { S.mirror = b.dataset.v === '1'; update(); } };
+$('sideSeg').onclick = e => { const b = e.target.closest('button'); if (b) { S.side = b.dataset.v; update(); } };
+$('colA').oninput = e => { S.colors[0] = e.target.value; update(); };
+$('colB').oninput = e => { S.colors[1] = e.target.value; update(); };
+$('dd').onclick = e => { const b = e.target.closest('[data-row]'); if (b) { S.row = +b.dataset.row; update(); } };
+
+$('file').onchange = e => { handleFile(e.target.files[0]); e.target.value = ''; };
+$('picReplace').onclick = () => $('file').click();
+const drop = $('drop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); handleFile(e.dataTransfer.files[0]); });
+$('kMinus').onclick = () => { S.pic.k = Math.max(2, S.pic.k - 1); refreshPic(); };
+$('kPlus').onclick = () => { S.pic.k = Math.min(8, S.pic.k + 1); refreshPic(); };
+$('hMinus').onclick = () => { S.pic.rows = Math.max(4, PIC.H - 1); refreshPic(); };
+$('hPlus').onclick = () => { S.pic.rows = Math.min(400, PIC.H + 1); refreshPic(); };
+$('hAuto').onclick = () => { S.pic.rows = 0; refreshPic(); };
+$('tidy').onchange = e => { S.pic.tidy = e.target.checked; refreshPic(); };
+$('weaveSeg').onclick = e => { const b = e.target.closest('button'); if (b) { S.pic.weave = b.dataset.v; update(); } };
+$('pv').onclick = e => {
+  const rect = e.currentTarget.getBoundingClientRect(), cs = +e.currentTarget.dataset.cs || 1;
+  const y = Math.floor((e.clientY - rect.top) / cs); S.pic.row = Math.min(PIC.H, Math.max(1, PIC.H - y)); update();
+};
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-restart]'); if (!b) return;
+  if (b.dataset.restart === 'pat') S.row = 1; else S.pic.row = 1; update();
+});
+$('prev').onclick = () => { if (S.mode === 'pat') { if (S.row > 1) S.row--; } else if (PIC && S.pic.row > 1) S.pic.row--; update(); };
+$('next').onclick = () => { if (S.mode === 'pat') S.row++; else if (PIC && S.pic.row <= PIC.H) S.pic.row++; update(); };
+document.addEventListener('keydown', e => {
+  if (e.target.closest('input')) return;
+  if (e.key === 'ArrowRight') $('next').click();
+  if (e.key === 'ArrowLeft') $('prev').click();
+});
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.mode === 'pic' && PIC) renderPreview(); }, 150); });
+
+if (S.pic.src && S.mode === 'pic') refreshPic(); else update();
+</script>
+</body>
+</html>
