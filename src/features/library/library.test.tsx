@@ -234,7 +234,7 @@ describe('StitchDetailScreen', () => {
   it('switches the preview between front and back', async () => {
     await render(<StitchDetailScreen id="twill21" />);
     expect(screen.getByLabelText(/front$/)).toBeTruthy();
-    await fireEvent.press(screen.getByRole('radio', { name: 'Back' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Back of the cloth' }));
     expect(screen.getByLabelText(/, back$/)).toBeTruthy();
   });
 

@@ -1,4 +1,4 @@
-import { useContext, useState, type ReactNode } from 'react';
+import { useContext, useState, type ReactNode, type Ref } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -31,6 +31,8 @@ export type ScreenProps = {
   children?: ReactNode;
   /** Wrap the content in a vertical ScrollView. Default false. */
   scroll?: boolean;
+  /** Ref to that ScrollView (with `scroll`), e.g. to bring a card back into view on phones. */
+  scrollRef?: Ref<ScrollView>;
   /** Rendered above the content and does not scroll (usually a `Header`). */
   header?: ReactNode;
   /** Rendered below the content and does not scroll (usually a `BottomBar`, which pads its own bottom inset). */
@@ -50,7 +52,7 @@ export type ScreenProps = {
 
 const defaultEdges: ScreenEdge[] = ['top'];
 
-export function Screen({ children, scroll = false, header, footer, edges = defaultEdges, padded = true, contentStyle, testID }: ScreenProps) {
+export function Screen({ children, scroll = false, scrollRef, header, footer, edges = defaultEdges, padded = true, contentStyle, testID }: ScreenProps) {
   const theme = useTheme();
   const insets = useInsets();
   const bottomInset = edges.includes('bottom') && !footer ? insets.bottom : 0;
@@ -71,6 +73,7 @@ export function Screen({ children, scroll = false, header, footer, edges = defau
       {header ? <View style={column}>{header}</View> : null}
       {scroll ? (
         <ScrollView
+          ref={scrollRef}
           style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: bottomInset + theme.spacing.xl }}>

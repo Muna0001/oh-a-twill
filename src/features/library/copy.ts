@@ -48,6 +48,8 @@ export const libraryCopy = {
   faceLabel: 'Which side to show',
   front: 'Front',
   back: 'Back',
+  frontA11y: 'Front of the cloth',
+  backA11y: 'Back of the cloth',
   previewLabel: (name: string, face: 'front' | 'back') => `Woven preview of ${name}, ${face === 'front' ? 'front' : 'back'}`,
   alsoCalled: (aliases: string[]) => `Also called ${aliases.join(', ')}`,
   goodFor: 'Good for',
