@@ -10,9 +10,9 @@ import { resetMediaForTests } from './picture.native';
 import { contexts, files, imageManipulatorMock, imagePickerMock, images, overrides, resetExpoMocks, solidPng } from './testExpoMocks';
 import { PNGS } from './testPngs';
 
-jest.mock('expo-file-system', () => require('./testExpoMocks').fileSystemMock);
-jest.mock('expo-image-manipulator', () => require('./testExpoMocks').imageManipulatorMock);
-jest.mock('expo-image-picker', () => require('./testExpoMocks').imagePickerMock);
+jest.mock('expo-file-system', () => jest.requireActual('./testExpoMocks').fileSystemMock);
+jest.mock('expo-image-manipulator', () => jest.requireActual('./testExpoMocks').imageManipulatorMock);
+jest.mock('expo-image-picker', () => jest.requireActual('./testExpoMocks').imagePickerMock);
 
 const manipulate = imageManipulatorMock.ImageManipulator.manipulate;
 const FLOWER = new Uint8Array(readFileSync(join(__dirname, '../../assets/samples/flower.png')));
