@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useContext, useState, type ReactNode } from 'react';
 import {
   KeyboardAvoidingView,
@@ -15,6 +14,7 @@ import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 import { Button } from './Button';
 import { uiCopy } from './copy';
 import { Icon, type IconName } from './Icon';
+import { goBackOrHome } from './lazy';
 import { Text } from './Text';
 import { useTheme } from './theme';
 
@@ -137,8 +137,7 @@ export function Header({ title, subtitle, back, onBack, backLabel = uiCopy.back,
   const showBack = back ?? !!onBack;
   const goBack = () => {
     if (onBack) onBack();
-    else if (router.canGoBack()) router.back();
-    else router.replace('/');
+    else goBackOrHome();
   };
   return (
     <View testID={testID} style={{ marginBottom: theme.spacing.lg }}>

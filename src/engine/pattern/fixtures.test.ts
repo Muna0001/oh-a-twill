@@ -79,9 +79,9 @@ describe('golden fixtures from the reference web app', () => {
       for (const c of f.combos) {
         c.rows.forEach((want, i) => {
           const r = i + 1;
-          expect(goesRight(c.setup, r)).toBe(want.ltr);
-          expect(weftKey(s, c.setup, r)).toBe(want.weftKey);
-          expect(runs(want.states, want.ltr)).toEqual(want.runs);
+          if (goesRight(c.setup, r) !== want.ltr) throw new Error(`goesRight ${f.id} row ${r}`);
+          if (weftKey(s, c.setup, r) !== want.weftKey) throw new Error(`weftKey ${f.id} row ${r}`);
+          if (JSON.stringify(runs(want.states, want.ltr)) !== JSON.stringify(want.runs)) throw new Error(`runs ${f.id} row ${r}`);
           for (let w = 0; w < c.warps; w++) {
             const over = overAt(s, c.setup, w, r);
             if (over !== want.states[w]) throw new Error(`overAt ${f.id} warp ${w} row ${r}`);

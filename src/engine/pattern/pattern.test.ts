@@ -134,21 +134,24 @@ describe('properties', () => {
         for (const W of WARPS)
           for (let r = 1; r <= 2 * period(s) + 1; r++) {
             const info = rowInfo(s, setup, W, r);
-            expect(info.states).toHaveLength(W);
+            const where = `${JSON.stringify(setup)} warps ${W} row ${r}`;
+            const step = info.ltr ? 1 : -1;
             const visited: number[] = [];
+            let ok = info.states.length === W;
             info.runs.forEach((run, i) => {
-              const step = info.ltr ? 1 : -1;
-              expect(run.n).toBe(Math.abs(run.to - run.from) + 1);
-              if (run.n > 1) expect(Math.sign(run.to - run.from)).toBe(step);
-              if (i > 0) expect(run.over).toBe(!info.runs[i - 1].over);
+              ok &&= run.n === Math.abs(run.to - run.from) + 1;
+              ok &&= run.n === 1 || Math.sign(run.to - run.from) === step;
+              ok &&= i === 0 || run.over !== info.runs[i - 1].over;
               for (let k = 0; k < run.n; k++) {
                 const warp = run.from + k * step;
-                expect(info.states[warp - 1]).toBe(run.over);
+                ok &&= info.states[warp - 1] === run.over;
                 visited.push(warp);
               }
             });
             const all = Array.from({ length: W }, (_, i) => i + 1);
-            expect(visited).toEqual(info.ltr ? all : all.reverse());
+            if (!info.ltr) all.reverse();
+            // Plain checks in the loop (hundreds of thousands of cells); one assertion per row.
+            expect({ where, ok, visited }).toEqual({ where, ok: true, visited: all });
           }
     });
 

@@ -32,3 +32,12 @@ The sandbox blocks Expo's API host, so install Expo packages with `EXPO_OFFLINE=
 - **Strings:** user-facing copy lives in a `copy.ts` in the folder that uses it. Reuse the reference app's wording verbatim for ported screens. Sentence case, typographic quotes (’), US spelling ("Color").
 - **2/2 twill row order is fixed:** `##..`, `#..#`, `..##`, `.##.`. Never reorder it. See PLAN.md section 6 for the full list of behaviours to preserve.
 - Never skip or weaken a test to get green.
+
+## Things agents have tripped on
+
+- React Native Testing Library v14 is async: `await render(...)`, `await fireEvent.press(...)`.
+- In Node scripts, load Playwright with `createRequire(import.meta.url)('playwright')`; a bare ESM import does not resolve from the repo.
+- For custom text, spread `theme.fonts.semibold` (etc.) from `useTheme()`; do not set `fontWeight` yourself.
+- `Stepper` commits typed numbers on blur/submit, not per keystroke.
+- Import `@/store` in tests freely (it runs in memory); to test persistence, mock AsyncStorage with its bundled jest mock.
+- Read `src/ui/index.ts` and the component files for the primitives' props before building screens. Use them; do not restyle from scratch.
