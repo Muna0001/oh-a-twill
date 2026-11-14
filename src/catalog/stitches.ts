@@ -26,7 +26,7 @@ export const STITCHES: Stitch[] = [
     tips: [
       'Each row is the row below moved over by one warp. If the diagonal stops climbing, a row was skipped or woven twice.',
       'The repeat is 4 warps and 4 rows. A warp count that divides by 4 makes it fit edge to edge.',
-      'On some rows the weft will not catch the edge warp by itself. Wrap it around that warp first; the guide tells you when.',
+      'With a warp count that divides by 4, two of the four rows start with a single warp before the twos begin. The guide gives the count for each row.',
     ],
     tile: TWILL,
   },
@@ -251,15 +251,15 @@ export const STITCHES: Stitch[] = [
   {
     id: 'hairline',
     name: 'Hairline stripes',
-    aliases: ['Hairline'],
+    aliases: [],
     category: 'color',
     difficulty: 2,
     desc: 'Plain weave with the colors alternating thread by thread in both warp and weft, making thin vertical lines.',
-    goodFor: 'Fine vertical lines, one warp wide.',
+    goodFor: 'Fine vertical lines, one warp wide, on the front. On the back the lines run across.',
     tips: [
       'Wind the warp alternating Color A and Color B, one thread each.',
       'Alternate the weft too: one row of Color A, one row of Color B.',
-      'Each weft color goes over the warps of the other color, so every warp line stays one color. If you get horizontal lines instead, the two weft colors are swapped.',
+      'Each weft color goes over the warps of its own color and under the others, so every warp line stays one color. If you get horizontal lines instead, the two weft colors are swapped.',
       'Use an even warp count.',
     ],
     tile: PLAIN,
