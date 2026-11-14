@@ -10,6 +10,7 @@ import { REBUILD_DELAY_MS } from './usePictureGrid';
 
 jest.mock('expo-router', () => ({
   router: { back: jest.fn(), replace: jest.fn(), push: jest.fn(), canGoBack: jest.fn(() => false) },
+  useIsFocused: () => true,
 }));
 
 jest.mock('@/media', () => {

@@ -172,7 +172,7 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
             <WarpNumbers count={warps} />
           </StripScroller>
 
-          <StepChips runs={info.runs} row={row} ltr={info.ltr} weftColor={weftColor} testID="guide-steps" />
+          <StepChips runs={info.runs} row={row} ltr={info.ltr} testID="guide-steps" />
 
           {info.edgeWarp != null ? <EdgeTip warp={info.edgeWarp} testID="guide-edge-tip" /> : null}
 

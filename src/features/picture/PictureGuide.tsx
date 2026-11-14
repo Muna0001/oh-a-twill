@@ -1,9 +1,10 @@
-import { router } from 'expo-router';
+import { router, useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 import { importPictureFile, messageFor, pickPicture, type PickedPicture, type PickSource } from '@/media';
-import { useProject, useProjects, type PicturePatch, type PictureProject } from '@/store';
+import { useProject, useProjects, useSettings, type PicturePatch, type PictureProject } from '@/store';
+import { tapHaptic, useKeepAwake, useRowKeys } from '@/platform';
 import { BottomBar, Button, EmptyState, Header, Panel, Screen, Stepper, Text, useTheme } from '@/ui';
 import { LIMITS } from '@/engine';
 import { PicturePreview } from '@/weave';
@@ -50,7 +51,8 @@ function Guide({ project }: { project: PictureProject }) {
     useProjects.getState().open(id);
   }, [id]);
 
-  // HOOK(platform): useKeepAwake() from '@/platform' while the guide is open, when settings.keepAwake is on.
+  const haptics = useSettings((st) => st.haptics);
+  useKeepAwake(useSettings((st) => st.keepAwake));
 
   const update = useCallback((patch: PicturePatch) => useProjects.getState().updatePicture(id, patch), [id]);
 
@@ -88,10 +90,10 @@ function Guide({ project }: { project: PictureProject }) {
   };
   const onNext = () => {
     if (!ready || finished) return;
-    // HOOK(platform): tapHaptic() from '@/platform' when settings.haptics is on.
+    if (haptics) tapHaptic();
     useProjects.getState().nextRow(id, H + 1);
   };
-  // HOOK(platform): useRowKeys({ onPrev, onNext }) from '@/platform' (← and → on web).
+  useRowKeys(onPrev, onNext, useIsFocused());
 
   const footer = (
     <BottomBar
