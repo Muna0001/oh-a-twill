@@ -121,7 +121,7 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
   const header = (
     <Header
       title={project.name}
-      subtitle={stitch.name}
+      subtitle={stitch.name === project.name ? undefined : stitch.name}
       onBack={backToProjects}
       right={
         <Button

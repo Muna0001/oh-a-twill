@@ -114,7 +114,7 @@ function ProjectRow({ project, first, onOpen, onMore }: { project: Project; firs
           </Text>
         </View>
       </Pressable>
-      <Button variant="link" icon="ellipsis-horizontal" accessibilityLabel={copy.projects.more(project.name)} onPress={onMore} />
+      <Button variant="link" icon="ellipsis-horizontal" accessibilityLabel={copy.projects.more(project.name)} onPress={onMore} style={{ alignSelf: 'center' }} />
     </View>
   );
 }
