@@ -79,6 +79,23 @@ describe('native', () => {
     jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons![0].onPress!());
     await expect(native.confirmAsync({ title: 'Sure?', confirmLabel: 'Yes', cancelLabel: 'No' })).resolves.toBe(false);
   });
+
+  it('scrolls the given scroll view to the top of the target, and ignores anything else', () => {
+    const inner = {};
+    const scrollTo = jest.fn();
+    const scrollView = { scrollTo, getInnerViewRef: () => inner };
+    const measureLayout = jest.fn((relativeTo: unknown, onSuccess: (x: number, y: number) => void) => onSuccess(0, 120));
+    native.scrollIntoView({ measureLayout }, scrollView);
+    expect(measureLayout.mock.calls[0][0]).toBe(inner);
+    expect(scrollTo).toHaveBeenCalledWith({ y: 104, animated: true });
+    measureLayout.mockImplementationOnce((_r, onSuccess) => onSuccess(0, 4));
+    native.scrollIntoView({ measureLayout }, scrollView);
+    expect(scrollTo).toHaveBeenLastCalledWith({ y: 0, animated: true });
+    expect(() => native.scrollIntoView({ measureLayout })).not.toThrow();
+    expect(() => native.scrollIntoView(null, scrollView)).not.toThrow();
+    expect(() => native.scrollIntoView({}, {})).not.toThrow();
+    expect(scrollTo).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('web', () => {

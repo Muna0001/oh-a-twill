@@ -141,10 +141,14 @@ function newId(taken: Record<string, unknown>): string {
   return id;
 }
 
-/** Store `project` with a fresh updatedAt and move it to the front of the order. */
-function commit(s: ProjectsData, project: Project): Pick<ProjectsData, 'projects' | 'order'> {
+/**
+ * Store `project` with a fresh updatedAt and move it to the front of the order. A new project
+ * passes its creation time as `at`, so createdAt and updatedAt are the same instant even when
+ * the clock ticks between building the project and storing it.
+ */
+function commit(s: ProjectsData, project: Project, at: number = Date.now()): Pick<ProjectsData, 'projects' | 'order'> {
   return {
-    projects: { ...s.projects, [project.id]: { ...project, updatedAt: Date.now() } },
+    projects: { ...s.projects, [project.id]: { ...project, updatedAt: at } },
     order: [project.id, ...s.order.filter((id) => id !== project.id)],
   };
 }
@@ -289,7 +293,7 @@ export const useProjects = create<ProjectsState>()(
             setup: cleanSetup(input.setup, { ...DEFAULTS.setup, side: settings.defaultSide }),
             colors: cleanColors(input.colors, settings.defaultColors),
           };
-          set((s) => commit(s, project));
+          set((s) => commit(s, project, now));
           return id;
         },
 
@@ -313,7 +317,7 @@ export const useProjects = create<ProjectsState>()(
             tidy: cleanBool(input.tidy, DEFAULTS.tidy),
             weave: cleanWeave(input.weave),
           };
-          set((s) => commit(s, project));
+          set((s) => commit(s, project, now));
           return id;
         },
 
@@ -381,7 +385,7 @@ export const useProjects = create<ProjectsState>()(
             createdAt: now,
             updatedAt: now,
           };
-          set((s) => commit(s, dupe));
+          set((s) => commit(s, dupe, now));
           return newProjectId;
         },
 

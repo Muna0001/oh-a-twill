@@ -1,10 +1,10 @@
 import { router, useIsFocused } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
+import { ScrollView, View } from 'react-native';
 
 import { importPictureFile, messageFor, pickPicture, type PickedPicture, type PickSource } from '@/media';
 import { useProject, useProjects, useSettings, type PicturePatch, type PictureProject } from '@/store';
-import { tapHaptic, useKeepAwake, useRowKeys } from '@/platform';
+import { scrollIntoView, tapHaptic, useKeepAwake, useRowKeys } from '@/platform';
 import { BottomBar, Button, EmptyState, Header, Panel, Screen, Stepper, Text, useTheme } from '@/ui';
 import { LIMITS } from '@/engine';
 import { PicturePreview } from '@/weave';
@@ -21,13 +21,13 @@ function goBack() {
 
 function Missing() {
   return (
-    <Screen header={<Header title={copy.projectsTitle} onBack={goBack} />} edges={['top', 'bottom']}>
+    <Screen header={<Header title="" onBack={goBack} />} edges={['top', 'bottom']}>
       <EmptyState
         testID="picture-missing"
-        icon="photo"
+        icon="queue-list"
         title={copy.missingTitle}
         message={copy.missingMessage}
-        action={<Button label={copy.missingAction} onPress={() => router.replace('/projects')} />}
+        action={<Button variant="primary" label={copy.missingAction} onPress={() => router.replace('/projects')} />}
       />
     </Screen>
   );
@@ -46,6 +46,8 @@ function Guide({ project }: { project: PictureProject }) {
   const { pic, status, error } = usePictureGrid(project);
   const [pickError, setPickError] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
+  const cardRef = useRef<ComponentRef<typeof View>>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
 
   useEffect(() => {
     useProjects.getState().open(id);
@@ -87,11 +89,13 @@ function Guide({ project }: { project: PictureProject }) {
   const onPrev = () => {
     if (!ready || row <= 1) return;
     useProjects.getState().prevRow(id);
+    scrollIntoView(cardRef.current, scrollRef.current);
   };
   const onNext = () => {
     if (!ready || finished) return;
     if (haptics) tapHaptic();
     useProjects.getState().nextRow(id, H + 1);
+    scrollIntoView(cardRef.current, scrollRef.current);
   };
   useRowKeys(onPrev, onNext, useIsFocused());
 
@@ -105,7 +109,7 @@ function Guide({ project }: { project: PictureProject }) {
   );
 
   return (
-    <Screen scroll header={<Header title={project.name} onBack={goBack} />} footer={footer}>
+    <Screen scroll scrollRef={scrollRef} header={<Header title={project.name} onBack={goBack} />} footer={footer} testID="picture-guide">
       <Panel>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: theme.spacing.md }}>
           <View style={{ flexShrink: 1 }}>
@@ -139,7 +143,9 @@ function Guide({ project }: { project: PictureProject }) {
 
       {ready && pic ? (
         <>
-          <RowCard pic={pic} weave={project.weave} row={row} onRestart={() => useProjects.getState().setRow(id, 1)} />
+          <View ref={cardRef}>
+            <RowCard pic={pic} weave={project.weave} row={row} onRestart={() => useProjects.getState().setRow(id, 1)} />
+          </View>
           <Panel>
             <Text variant="heading">{copy.previewTitle}</Text>
             <Text variant="hint" style={{ marginTop: theme.spacing.xs, marginBottom: theme.spacing.md }}>

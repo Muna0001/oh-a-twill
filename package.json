@@ -12,7 +12,9 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "check": "tsc --noEmit && expo lint && jest",
-    "web:export": "expo export --platform web"
+    "web:export": "node scripts/export-web.mjs",
+    "web:export:pages": "node scripts/export-web.mjs --base /oh-a-twill",
+    "e2e:pwa": "node e2e/pwa.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/familjen-grotesk": "^0.4.2",

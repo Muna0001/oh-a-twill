@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { useEffect, type ReactNode } from 'react';
 
 import { deletePicture } from '@/media';
+import { UpdateNotice } from '@/platform';
 import { configureProjectFiles, useHydrated, useSettings } from '@/store';
 import { AppProviders, useTheme, useThemePreference } from '@/ui';
 
@@ -39,6 +40,8 @@ export default function RootLayout() {
       <Bootstrap>
         <Screens />
       </Bootstrap>
+      {/* Web: registers the service worker and says "Updated" once after a new version. */}
+      <UpdateNotice />
     </AppProviders>
   );
 }

@@ -26,7 +26,7 @@ export const copy = {
 
   project: {
     notFoundTitle: 'Project not found',
-    notFoundMessage: 'It may have been deleted.',
+    notFoundMessage: 'It may have been deleted. Your other weavings are in Projects.',
     toProjects: 'Go to projects',
   },
 

@@ -36,6 +36,9 @@ export function LibraryScreen() {
   const [filter, setFilter] = useState<Filter>('all');
   const favourites = useSettings((s) => s.favourites);
   const colors = useSettings((s) => s.defaultColors);
+  const [legacy] = useState(readLegacy);
+  const legacyHandled = useSettings((s) => s.legacyImportHandled);
+  const offerLegacy = !!legacy && !legacyHandled;
 
   const stitches = useMemo(
     () =>
@@ -63,8 +66,8 @@ export function LibraryScreen() {
         {copy.title}
       </Text>
 
-      <LegacyOffer />
-      <TopCard />
+      {legacy && offerLegacy ? <LegacyOffer legacy={legacy} /> : null}
+      <TopCard quickStart={!offerLegacy} />
 
       <SearchField value={query} onChangeText={setQuery} placeholder={copy.searchPlaceholder} accessibilityLabel={copy.searchLabel} testID="library-search" />
 
@@ -123,13 +126,16 @@ export function LibraryScreen() {
   );
 }
 
-/** Continue (the last opened project), Quick start (no projects yet), or nothing. */
-function TopCard() {
+/**
+ * Continue (the last opened project), Quick start (no projects yet), or nothing. Quick start
+ * waits while the old helper's weaving is on offer, so first launch asks one thing at a time.
+ */
+function TopCard({ quickStart }: { quickStart: boolean }) {
   const lastOpenedId = useProjects((s) => s.lastOpenedId);
   const hasProjects = useProjects((s) => s.order.length > 0);
   const last = useProject(lastOpenedId);
   if (last) return <ContinueCard project={last} />;
-  if (!hasProjects) return <QuickStartCard />;
+  if (!hasProjects && quickStart) return <QuickStartCard />;
   return null;
 }
 
@@ -239,12 +245,9 @@ async function importLegacy(data: LegacyData): Promise<void> {
   open(openId);
 }
 
-function LegacyOffer() {
+function LegacyOffer({ legacy }: { legacy: LegacyData }) {
   const theme = useTheme();
-  const handled = useSettings((s) => s.legacyImportHandled);
-  const [legacy] = useState(readLegacy);
   const [busy, setBusy] = useState(false);
-  if (!legacy || handled) return null;
 
   const accept = async () => {
     if (busy) return;

@@ -66,8 +66,7 @@ export const pictureCopy = {
   rowDone: 'Row done',
 
   /* Fallback (new: the reference has a single picture and no project list) */
-  missingTitle: 'Picture project not found',
-  missingMessage: 'It may have been deleted.',
+  missingTitle: 'Project not found',
+  missingMessage: 'It may have been deleted. Your other weavings are in Projects.',
   missingAction: 'Go to projects',
-  projectsTitle: 'Projects',
 } as const;

@@ -1,4 +1,4 @@
-import { useContext, useState, type ReactNode, type Ref } from 'react';
+import { useContext, useState, type ComponentRef, type ReactNode, type Ref } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -32,7 +32,7 @@ export type ScreenProps = {
   /** Wrap the content in a vertical ScrollView. Default false. */
   scroll?: boolean;
   /** Ref to that ScrollView (with `scroll`), e.g. to bring a card back into view on phones. */
-  scrollRef?: Ref<ScrollView>;
+  scrollRef?: Ref<ComponentRef<typeof ScrollView>>;
   /** Rendered above the content and does not scroll (usually a `Header`). */
   header?: ReactNode;
   /** Rendered below the content and does not scroll (usually a `BottomBar`, which pads its own bottom inset). */
@@ -164,9 +164,14 @@ export function Header({ title, subtitle, back, onBack, backLabel = uiCopy.back,
             <Icon name="chevron-left" size={24} />
           </Pressable>
         ) : null}
-        <Text variant="title" style={{ flex: 1 }}>
-          {title}
-        </Text>
+        {title ? (
+          <Text variant="title" style={{ flex: 1 }}>
+            {title}
+          </Text>
+        ) : (
+          // No empty heading for screen readers on a back-only header.
+          <View style={{ flex: 1 }} />
+        )}
         {right}
       </View>
       {subtitle ? (

@@ -44,6 +44,19 @@ describe('createPattern', () => {
     expect(P().order).toEqual([id]);
   });
 
+  it('stamps createdAt and updatedAt with one instant even when the clock moves on', () => {
+    // Under a busy full-suite run the millisecond can tick between building and storing.
+    let t = 5000;
+    const spy = jest.spyOn(Date, 'now').mockImplementation(() => (t += 1));
+    try {
+      const ids = [P().createPattern({ stitchId: 'plain', name: 'A' }), P().createPicture()];
+      ids.push(P().duplicate(ids[0])!);
+      for (const id of ids) expect(P().projects[id].updatedAt).toBe(P().projects[id].createdAt);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('follows changed settings', () => {
     useSettings.getState().set({ defaultWarps: 40, defaultSide: 'right', defaultColors: ['#111111', '#EEEEEE'] });
     const id = P().createPattern({ stitchId: 'plain', name: 'Plain weave' });
