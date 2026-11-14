@@ -195,7 +195,6 @@ try {
 
   const inputs = nameColorInputs();
   const names = await page.evaluate((list) => {
-    /* global nameColor, hex */
     return list.map((rgb) => [nameColor(rgb), hex(rgb)]);
   }, inputs);
   const table = { source: 'reference/web/index.html', colors: inputs.map((rgb, i) => [...rgb, ...names[i]]) };

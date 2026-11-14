@@ -11,7 +11,7 @@ import {
 import type { PatternProject, PictureProject } from './index';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+  jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
 
 const P = () => useProjects.getState();
@@ -532,6 +532,8 @@ describe('persistence', () => {
     const boom = () => {
       throw new Error('storage is broken');
     };
+    const realSet = (AsyncStorage.setItem as jest.Mock).getMockImplementation()!;
+    const realGet = (AsyncStorage.getItem as jest.Mock).getMockImplementation()!;
     (AsyncStorage.setItem as jest.Mock).mockImplementation(boom);
     (AsyncStorage.getItem as jest.Mock).mockImplementation(boom);
     try {
@@ -549,10 +551,8 @@ describe('persistence', () => {
       await flush();
       expect(P().projects[id].row).toBe(3);
     } finally {
-      const real = jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock');
-      void real;
-      (AsyncStorage.setItem as jest.Mock).mockReset();
-      (AsyncStorage.getItem as jest.Mock).mockReset();
+      (AsyncStorage.setItem as jest.Mock).mockImplementation(realSet);
+      (AsyncStorage.getItem as jest.Mock).mockImplementation(realGet);
     }
   });
 });
