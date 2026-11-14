@@ -130,7 +130,9 @@ export type RowPressOverlayProps = {
 export function RowPressOverlay({ rows, pitch, onPressRow, currentRow, rowLabel, accessibilityLabel, testID }: RowPressOverlayProps) {
   const press = useCallback(
     (e: GestureResponderEvent) => {
-      const y = Math.floor(e.nativeEvent.locationY / pitch);
+      // Native gives locationY; on web a press is a click, which carries offsetY instead.
+      const native = e.nativeEvent as { locationY?: number; offsetY?: number };
+      const y = Math.floor((native.locationY ?? native.offsetY ?? NaN) / pitch);
       if (Number.isFinite(y)) onPressRow(Math.min(rows - 1, Math.max(0, y)));
     },
     [pitch, rows, onPressRow],

@@ -208,6 +208,9 @@ const NUM_BOX = 30;
 export function WarpNumbers({ count, cellMin = 10, cell: fixed, testID }: WarpNumbersProps) {
   const { cell, onLayout } = useStripCell(count, cellMin, fixed);
   const labels = useMemo(() => warpNumberLabels(count), [count]);
+  // Every warp is numbered up to 32, so two-digit numbers sit side by side: keep them apart on narrow cells.
+  const tight = count <= 32 && count >= 10 && cell < 16;
+  const fontSize = tight ? 10 : 11;
   return (
     <View
       testID={testID}
@@ -223,7 +226,7 @@ export function WarpNumbers({ count, cellMin = 10, cell: fixed, testID }: WarpNu
           align="center"
           numberOfLines={1}
           maxFontSizeMultiplier={1.2}
-          style={{ position: 'absolute', top: 0, left: (n - 0.5) * cell - NUM_BOX / 2, width: NUM_BOX, fontSize: 11, lineHeight: 16 }}>
+          style={{ position: 'absolute', top: 0, left: (n - 0.5) * cell - NUM_BOX / 2, width: NUM_BOX, fontSize, lineHeight: 16, letterSpacing: tight ? -0.3 : 0 }}>
           {n}
         </Text>
       ))}
