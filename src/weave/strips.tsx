@@ -234,7 +234,8 @@ export function WarpNumbers({ count, cellMin = 10, cell: fixed, testID }: WarpNu
         <Text
           key={n}
           variant="caption"
-          tabular
+          // Proportional digits are narrower ("11" especially) where two-digit numbers sit side by side.
+          tabular={!tight}
           align="center"
           numberOfLines={1}
           maxFontSizeMultiplier={1.2}

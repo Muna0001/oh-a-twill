@@ -184,7 +184,7 @@ const loadedFaces: Record<FontFace, TextStyle> = {
   medium: { fontFamily: fontFamilies.medium },
   semibold: { fontFamily: fontFamilies.semibold },
   bold: { fontFamily: fontFamilies.bold },
-  serif: serifFamily ? { fontFamily: serifFamily } : systemFaces.serif,
+  serif: { fontFamily: serifFamily },
 };
 
 export type ShadowName = 'float' | 'lift' | 'bar' | 'segment';
