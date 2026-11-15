@@ -152,7 +152,7 @@ export type TypeSpec = {
   color: ColorToken;
 };
 
-const display: TypeSpec = { fontSize: 46, lineHeight: 50, face: 'serif', letterSpacing: -1.38, tabular: true, color: 'ink' };
+const display: TypeSpec = { fontSize: 46, lineHeight: 50, face: 'serif', letterSpacing: -1.38, color: 'ink' };
 
 export const typeScale: Record<TypeVariant, TypeSpec> = {
   display,

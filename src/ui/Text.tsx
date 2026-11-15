@@ -10,7 +10,7 @@ export type TextProps = RNTextProps & {
   /** Overrides the variant's face with a sans weight (so it also turns a serif variant sans). */
   weight?: FontWeightName;
   align?: TextStyle['textAlign'];
-  /** Tabular numerals (always on for `display` / `rowNumber`). */
+  /** Tabular numerals, for numbers that change in place in a fixed slot. Off by default. */
   tabular?: boolean;
 };
 

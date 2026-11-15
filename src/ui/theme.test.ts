@@ -78,7 +78,9 @@ describe('type scale', () => {
 
   it('makes rowNumber an alias of display', () => {
     expect(typeScale.rowNumber).toBe(typeScale.display);
-    expect(typeScale.display).toMatchObject({ fontSize: 46, lineHeight: 50, letterSpacing: -1.38, tabular: true });
+    expect(typeScale.display).toMatchObject({ fontSize: 46, lineHeight: 50, letterSpacing: -1.38 });
+    // Proportional figures: Lora's tabular "1" leaves a gap in "Row 1".
+    expect(typeScale.display.tabular).toBeFalsy();
   });
 });
 

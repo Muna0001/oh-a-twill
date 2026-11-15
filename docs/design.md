@@ -30,7 +30,7 @@ Familjen Grotesk is removed. Load all weights with `useFonts`, one family name p
 | `hint` | Inter 400 | 14 / 21 | 0.14 | Secondary text |
 | `caption` | Inter 400 | 12 / 18 | 0.12 | Warp numbers, small meta |
 
-`rowNumber` becomes an alias of `display`. Numbers in rows, steppers and warp numbers use `fontVariant: ['tabular-nums']`.
+`rowNumber` becomes an alias of `display`. Steppers and other numbers that change in place use `fontVariant: ['tabular-nums']`. The serif `display` row number does not (Lora's tabular "1" leaves a gap).
 
 ## Colour tokens
 
