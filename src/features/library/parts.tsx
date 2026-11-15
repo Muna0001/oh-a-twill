@@ -50,21 +50,18 @@ export function StitchCard({ stitch, colors, favourite, onPress, style }: Stitch
       accessibilityRole="button"
       accessibilityLabel={libraryCopy.cardLabel(stitch.name, stitch.desc)}
       onPress={onPress}
-      style={({ pressed }) => [
-        {
-          backgroundColor: theme.colors.surface,
-          borderWidth: 1,
-          borderColor: theme.colors.line,
-          borderRadius: theme.radii.panel,
-          padding: 10,
-          gap: 8,
-          cursor: 'pointer',
-          opacity: pressed ? 0.7 : 1,
-        },
-        style,
-      ]}>
-      <TilePreview stitch={stitch} colors={colors} cols={12} rows={10} />
-      <View style={{ gap: 2, flex: 1 }}>
+      style={(state) => {
+        const { pressed, hovered } = state as { pressed: boolean; hovered?: boolean };
+        return [
+          theme.cards.card,
+          { padding: theme.spacing.md, gap: theme.spacing.md, cursor: 'pointer' },
+          // Lifts a little on web hover and on press.
+          pressed || hovered ? [theme.shadows.lift, { transform: [{ translateY: pressed ? 0 : -1 }] }] : null,
+          style,
+        ];
+      }}>
+      <TilePreview stitch={stitch} colors={colors} cols={12} rows={10} style={{ borderRadius: theme.radii.field }} />
+      <View style={{ gap: 2, flex: 1, paddingHorizontal: theme.spacing.xs }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text weight="semibold" numberOfLines={1} style={{ flex: 1 }}>
             {stitch.name}
@@ -75,7 +72,9 @@ export function StitchCard({ stitch, colors, favourite, onPress, style }: Stitch
           {stitch.desc}
         </Text>
       </View>
-      <DifficultyDots level={stitch.difficulty} />
+      <View style={{ paddingHorizontal: theme.spacing.xs, paddingBottom: theme.spacing.xs }}>
+        <DifficultyDots level={stitch.difficulty} />
+      </View>
     </Pressable>
   );
 }

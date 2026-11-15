@@ -19,7 +19,7 @@ import { convertIndexedToRgb, decode, encode } from 'fast-png';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 // Dark background of the app (src/ui/theme.ts, darkColors.bg). Light comes from app.json.
-const DARK_BG = '#11151D';
+const DARK_BG = '#17130F';
 
 function parseArgs(argv) {
   const opts = { base: process.env.EXPO_BASE_URL || '', outputDir: 'dist', skipExport: false };

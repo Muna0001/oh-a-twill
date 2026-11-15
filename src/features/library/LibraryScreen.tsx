@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { CATEGORIES, getStitch, listStitches } from '@/catalog';
@@ -7,7 +7,7 @@ import type { StitchCategory } from '@/engine';
 import { importPictureDataUrl } from '@/media';
 import { readLegacy, type LegacyData } from '@/platform/legacyImport';
 import { useProject, useProjects, useSettings, type Project } from '@/store';
-import { Button, Chip, EmptyState, Panel, Screen, SearchField, Text, useTheme } from '@/ui';
+import { Button, Chip, EmptyState, Panel, PaperShape, Screen, SearchField, Text, useTheme, type PaperColor } from '@/ui';
 import { TilePreview } from '@/weave';
 
 import { libraryCopy as copy } from './copy';
@@ -21,16 +21,18 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'favorites', label: copy.favorites },
 ];
 
-const GAP = 12;
-const MAX_CARD = 200;
+/** Gap between grid cards: the spec's 20, or 12 on very narrow screens so two columns still fit. */
+const GAP = 20;
+const NARROW_GAP = 12;
+const MAX_CARD = 220;
 
 /** Below this content width (a phone with the page zoomed far up) the cards stack in one column. */
 const ONE_COLUMN_BELOW = 260;
 
-/** How many columns fit: 2 or more on a phone, and cards no wider than about 200. */
-function columnsFor(contentWidth: number): number {
+/** How many columns fit: 2 or more on a phone, and cards no wider than about 220. */
+function columnsFor(contentWidth: number, gap: number): number {
   if (contentWidth < ONE_COLUMN_BELOW) return 1;
-  return Math.max(2, Math.ceil((contentWidth + GAP) / (MAX_CARD + GAP)));
+  return Math.max(2, Math.ceil((contentWidth + gap) / (MAX_CARD + gap)));
 }
 
 export function LibraryScreen() {
@@ -54,9 +56,12 @@ export function LibraryScreen() {
     [filter, favourites, query],
   );
 
-  const contentWidth = Math.min(width, theme.maxContentWidth) - theme.spacing.lg * 2;
-  const cols = columnsFor(contentWidth);
-  const cardWidth = Math.floor((contentWidth - GAP * (cols - 1)) / cols);
+  // The column is at most 720 wide and has the 20 px gutter on both sides.
+  const contentWidth = Math.min(width, theme.maxContentWidth) - theme.spacing.gutter * 2;
+  const gap = contentWidth < 340 ? NARROW_GAP : GAP;
+  const cols = columnsFor(contentWidth, gap);
+  const cardWidth = Math.floor((contentWidth - gap * (cols - 1)) / cols);
+  const top = useTopCard(!offerLegacy);
 
   const searching = query.trim() !== '';
   const empty =
@@ -64,14 +69,20 @@ export function LibraryScreen() {
       ? { title: copy.noFavoritesTitle, message: copy.noFavoritesMessage }
       : { title: copy.noMatchTitle, message: searching ? copy.noMatchMessage(query.trim()) : copy.noMatchInCategory };
 
+  // At most two paper shapes on screen: the title's, and the top card's or the empty state's.
+  const emptyPaper: PaperColor | undefined = top.kind === 'none' ? (filter === 'favorites' && !searching ? 'mint' : 'periwinkle') : undefined;
+
   return (
     <Screen scroll>
-      <Text variant="title" style={{ marginBottom: theme.spacing.lg }}>
-        {copy.title}
-      </Text>
+      <View style={{ marginBottom: theme.spacing.xl, minHeight: theme.minTouch, justifyContent: 'center' }}>
+        <PaperShape color="sky" seed={7} width={132} height={64} rotate={4} style={{ top: -6, right: -8 }} />
+        <Text variant="title" accessibilityRole="header">
+          {copy.title}
+        </Text>
+      </View>
 
       {legacy && offerLegacy ? <LegacyOffer legacy={legacy} /> : null}
-      <TopCard quickStart={!offerLegacy} />
+      {top.kind === 'continue' ? <ContinueCard project={top.project} /> : top.kind === 'quick' ? <QuickStartCard /> : null}
 
       <SearchField value={query} onChangeText={setQuery} placeholder={copy.searchPlaceholder} accessibilityLabel={copy.searchLabel} testID="library-search" />
 
@@ -80,8 +91,8 @@ export function LibraryScreen() {
         showsHorizontalScrollIndicator={false}
         accessibilityRole="radiogroup"
         accessibilityLabel={copy.categoriesLabel}
-        style={{ marginTop: theme.spacing.md, marginHorizontal: -theme.spacing.lg, flexGrow: 0 }}
-        contentContainerStyle={{ gap: theme.spacing.sm, paddingHorizontal: theme.spacing.lg }}>
+        style={{ marginTop: theme.spacing.md, marginHorizontal: -theme.spacing.gutter, flexGrow: 0 }}
+        contentContainerStyle={{ gap: theme.spacing.sm, paddingHorizontal: theme.spacing.gutter }}>
         {FILTERS.map((f) => (
           <Chip
             key={f.id}
@@ -102,6 +113,7 @@ export function LibraryScreen() {
           icon={filter === 'favorites' && !searching ? 'heart' : 'magnifying-glass'}
           title={empty.title}
           message={empty.message}
+          paper={emptyPaper}
           action={
             filter !== 'all' || searching ? (
               <Button
@@ -115,7 +127,7 @@ export function LibraryScreen() {
           }
         />
       ) : (
-        <View testID="stitch-grid" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: GAP, marginTop: theme.spacing.lg }}>
+        <View testID="stitch-grid" style={{ flexDirection: 'row', flexWrap: 'wrap', gap, marginTop: theme.spacing.xl }}>
           {stitches.map((s) => (
             <StitchCard
               key={s.id}
@@ -136,13 +148,28 @@ export function LibraryScreen() {
  * Continue (the last opened project), Quick start (no projects yet), or nothing. Quick start
  * waits while the old helper's weaving is on offer, so first launch asks one thing at a time.
  */
-function TopCard({ quickStart }: { quickStart: boolean }) {
+type TopCardKind = { kind: 'continue'; project: Project } | { kind: 'quick' } | { kind: 'none' };
+
+function useTopCard(quickStart: boolean): TopCardKind {
   const lastOpenedId = useProjects((s) => s.lastOpenedId);
   const hasProjects = useProjects((s) => s.order.length > 0);
   const last = useProject(lastOpenedId);
-  if (last) return <ContinueCard project={last} />;
-  if (!hasProjects && quickStart) return <QuickStartCard />;
-  return null;
+  if (last) return { kind: 'continue', project: last };
+  if (!hasProjects && quickStart) return { kind: 'quick' };
+  return { kind: 'none' };
+}
+
+/** The hero card surface with a torn-paper shape peeking out behind its bottom-left corner. */
+function HeroCard({ testID, paper, seed, children }: { testID: string; paper: PaperColor; seed: number; children: ReactNode }) {
+  const theme = useTheme();
+  return (
+    <View style={{ marginBottom: theme.spacing.cardGap }}>
+      <PaperShape color={paper} seed={seed} width={112} height={84} rotate={-6} dots style={{ bottom: -14, left: -10 }} />
+      <Panel testID={testID} variant="hero" style={{ marginBottom: 0 }}>
+        {children}
+      </Panel>
+    </View>
+  );
 }
 
 function ContinueCard({ project }: { project: Project }) {
@@ -150,16 +177,16 @@ function ContinueCard({ project }: { project: Project }) {
   const stitch = project.kind === 'pattern' ? getStitch(project.stitchId) : undefined;
   const meta = project.kind === 'pattern' ? copy.rowAndWarps(project.row, project.warps) : copy.pictureRowAndWarps(project.row, project.warps);
   return (
-    <Panel testID="continue-card" variant="hero">
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.md, alignItems: 'center' }}>
+    <HeroCard testID="continue-card" paper="marigold" seed={11}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.lg, alignItems: 'center' }}>
         {stitch && project.kind === 'pattern' ? (
           <View style={{ width: 84 }}>
-            <TilePreview stitch={stitch} colors={project.colors} cols={12} rows={10} mirror={project.setup.mirror} />
+            <TilePreview stitch={stitch} colors={project.colors} cols={12} rows={10} mirror={project.setup.mirror} style={{ borderRadius: theme.radii.field }} />
           </View>
         ) : null}
         <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 120, gap: 2 }}>
           <Text variant="label">{copy.continueLabel}</Text>
-          <Text variant="heading" numberOfLines={2}>
+          <Text variant="subtitle" numberOfLines={2}>
             {project.name}
           </Text>
           <Text color="muted" tabular>
@@ -173,10 +200,10 @@ function ContinueCard({ project }: { project: Project }) {
         accessibilityLabel={copy.continueA11y(project.name)}
         trailingIcon="chevron-right"
         fullWidth
-        style={{ marginTop: theme.spacing.md }}
+        style={{ marginTop: theme.spacing.lg }}
         onPress={() => router.push(`/project/${project.id}`)}
       />
-    </Panel>
+    </HeroCard>
   );
 }
 
@@ -199,21 +226,21 @@ function QuickStartCard() {
     router.push(`/project/${id}`);
   };
   return (
-    <Panel testID="quick-start-card" variant="hero">
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.md, alignItems: 'center' }}>
+    <HeroCard testID="quick-start-card" paper="mint" seed={5}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.lg, alignItems: 'center' }}>
         {twill ? (
           <View style={{ width: 84 }}>
-            <TilePreview stitch={twill} colors={colors} cols={12} rows={10} />
+            <TilePreview stitch={twill} colors={colors} cols={12} rows={10} style={{ borderRadius: theme.radii.field }} />
           </View>
         ) : null}
         <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 120, gap: 2 }}>
           <Text variant="label">{copy.quickStartLabel}</Text>
-          <Text variant="heading">{copy.quickStartLine(warps)}</Text>
+          <Text variant="subtitle">{copy.quickStartLine(warps)}</Text>
           <Text variant="hint">{copy.quickStartHint}</Text>
         </View>
       </View>
-      <Button variant="primary" label={copy.quickStartButton} trailingIcon="chevron-right" fullWidth style={{ marginTop: theme.spacing.md }} onPress={start} />
-    </Panel>
+      <Button variant="primary" label={copy.quickStartButton} trailingIcon="chevron-right" fullWidth style={{ marginTop: theme.spacing.lg }} onPress={start} />
+    </HeroCard>
   );
 }
 

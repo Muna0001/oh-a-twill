@@ -5,12 +5,11 @@ import { Image, Pressable, View } from 'react-native';
 import { getStitch } from '@/catalog';
 import { thumbnailSource } from '@/media';
 import { useProjectList, useProjects, useSettings, type Project } from '@/store';
-import { Button, EmptyState, Header, Icon, Screen, Sheet, Text, useTheme } from '@/ui';
+import { Button, Chip, EmptyState, Header, Icon, Screen, Sheet, Text, TextField, useTheme } from '@/ui';
 import { TilePreview } from '@/weave';
 
 import { copy } from './copy';
 import { pictureHeight, shortDate } from './helpers';
-import { TextField } from './parts';
 
 const THUMB = 64;
 
@@ -33,22 +32,16 @@ export function ProjectsScreen() {
 
   return (
     <Screen scroll header={<Header title={copy.projects.title} />}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm, marginBottom: theme.spacing.lg }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm, marginBottom: theme.spacing.xl }}>
         <Button variant="primary" icon="photo" label={copy.projects.newFromPicture} onPress={newFromPicture} />
         <Button icon="squares-2x2" label={copy.projects.newFromStitch} onPress={() => router.navigate('/')} />
       </View>
 
       {projects.length === 0 ? (
-        <EmptyState icon="queue-list" title={copy.projects.emptyTitle} message={copy.projects.emptyMessage} />
+        <EmptyState icon="queue-list" paper="marigold" paperSeed={4} title={copy.projects.emptyTitle} message={copy.projects.emptyMessage} />
       ) : (
-        <View
-          style={{
-            backgroundColor: theme.colors.surface,
-            borderWidth: 1,
-            borderColor: theme.colors.line,
-            borderRadius: theme.radii.panel,
-            overflow: 'hidden',
-          }}>
+        // One floated card holds the whole list; rows are split by hairlines.
+        <View testID="project-list" style={[theme.cards.card, { paddingVertical: theme.spacing.xs }]}>
           {projects.map((p, i) => (
             <ProjectRow key={p.id} project={p} first={i === 0} onOpen={() => openProject(p.id)} onMore={() => setMenuId(p.id)} />
           ))}
@@ -80,7 +73,7 @@ function ProjectRow({ project, first, onOpen, onMore }: { project: Project; firs
         alignItems: 'center',
         borderTopWidth: first ? 0 : 1,
         borderTopColor: theme.colors.line,
-        paddingRight: theme.spacing.xs,
+        marginHorizontal: theme.spacing.lg,
       }}>
       <Pressable
         accessibilityRole="button"
@@ -92,29 +85,29 @@ function ProjectRow({ project, first, onOpen, onMore }: { project: Project; firs
           minWidth: 0,
           flexDirection: 'row',
           alignItems: 'center',
-          gap: theme.spacing.md,
-          paddingVertical: theme.spacing.md,
-          paddingLeft: theme.spacing.md,
+          gap: theme.spacing.lg,
+          paddingVertical: theme.spacing.lg,
           cursor: 'pointer',
           opacity: pressed ? 0.7 : 1,
         })}>
         <Thumbnail project={project} />
-        <View style={{ flex: 1, minWidth: 0 }}>
+        <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <Text weight="semibold" numberOfLines={1}>
             {project.name}
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.xs }}>
-            {status.finished ? <Icon name="check-circle" size={16} color="weft" /> : null}
-            <Text variant="hint" tabular numberOfLines={1} style={{ flexShrink: 1 }}>
+          {status.finished ? (
+            <Chip tone="mint" icon="check" label={status.text} testID={`project-finished-${project.id}`} style={{ marginVertical: 2 }} />
+          ) : (
+            <Text variant="hint" tabular numberOfLines={1}>
               {status.text}
             </Text>
-          </View>
+          )}
           <Text variant="hint" numberOfLines={1}>
             {date}
           </Text>
         </View>
       </Pressable>
-      <Button variant="link" icon="ellipsis-horizontal" accessibilityLabel={copy.projects.more(project.name)} onPress={onMore} style={{ alignSelf: 'center' }} />
+      <Button variant="link" icon="ellipsis-horizontal" accessibilityLabel={copy.projects.more(project.name)} onPress={onMore} style={{ alignSelf: 'center', marginRight: -theme.spacing.sm }} />
     </View>
   );
 }
@@ -126,7 +119,7 @@ function Thumbnail({ project }: { project: Project }) {
     height: THUMB,
     borderRadius: theme.radii.field,
     overflow: 'hidden' as const,
-    backgroundColor: theme.colors.underChip,
+    backgroundColor: theme.colors.surfaceAlt,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   };
@@ -216,7 +209,7 @@ function ProjectMenu({ id, onClose }: { id: string | null; onClose: () => void }
           <View style={{ gap: theme.spacing.sm }}>
             <Text variant="label">{copy.projects.renameLabel}</Text>
             <View style={{ flexDirection: 'row', gap: theme.spacing.sm }}>
-              <TextField accessibilityLabel={copy.projects.renameLabel} value={name} onChangeText={setName} onSubmit={saveName} />
+              <TextField style={{ flex: 1 }} accessibilityLabel={copy.projects.renameLabel} value={name} onChangeText={setName} onSubmit={saveName} />
               <Button icon="pencil" label={copy.projects.renameSave} onPress={saveName} />
             </View>
           </View>

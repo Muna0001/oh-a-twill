@@ -5,7 +5,7 @@ import { ScrollView, View } from 'react-native';
 import { importPictureFile, messageFor, pickPicture, type PickedPicture, type PickSource } from '@/media';
 import { useProject, useProjects, useSettings, type PicturePatch, type PictureProject } from '@/store';
 import { scrollIntoView, tapHaptic, useKeepAwake, useRowKeys } from '@/platform';
-import { BottomBar, Button, EmptyState, Header, Panel, Screen, Stepper, Text, useTheme } from '@/ui';
+import { BottomBar, Button, Chip, EmptyState, Header, Panel, Screen, Stepper, Text, useTheme } from '@/ui';
 import { LIMITS } from '@/engine';
 import { PicturePreview } from '@/weave';
 
@@ -103,7 +103,17 @@ function Guide({ project }: { project: PictureProject }) {
     <BottomBar
       testID="picture-bar"
       left={<Button size="lg" icon="chevron-left" label={copy.back} accessibilityLabel={copy.previousRow} disabled={!ready || row <= 1} onPress={onPrev} testID="picture-prev" />}
-      center={ready ? (finished ? copy.finished : copy.row(row)) : ''}
+      center={
+        ready && finished ? (
+          <View accessibilityLiveRegion="polite">
+            <Chip tone="mint" icon="check" label={copy.finished} testID="picture-finished" />
+          </View>
+        ) : ready ? (
+          copy.row(row)
+        ) : (
+          ''
+        )
+      }
       right={<Button size="lg" variant="primary" trailingIcon="chevron-right" label={copy.rowDone} disabled={!ready || finished} onPress={onNext} testID="picture-next" />}
     />
   );

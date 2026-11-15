@@ -153,6 +153,8 @@ export function Panel({ children, variant = 'default', style, accessibilityLabel
 
 export type HeaderProps = {
   title: string;
+  /** 'subtitle' draws a smaller serif title (24, e.g. a stitch name). Default 'title' (34). */
+  titleVariant?: 'title' | 'subtitle';
   /** Muted line under the title. */
   subtitle?: string;
   /** Show the back button. Default false, or true when `onBack` is given. */
@@ -169,7 +171,7 @@ export type HeaderProps = {
 /** Width the title keeps before `right` wraps to its own line. */
 const HEADER_TITLE_BASIS = 100;
 
-export function Header({ title, subtitle, back, onBack, backLabel = uiCopy.back, right, testID }: HeaderProps) {
+export function Header({ title, titleVariant = 'title', subtitle, back, onBack, backLabel = uiCopy.back, right, testID }: HeaderProps) {
   const theme = useTheme();
   const showBack = back ?? !!onBack;
   const goBack = () => {
@@ -200,7 +202,7 @@ export function Header({ title, subtitle, back, onBack, backLabel = uiCopy.back,
           </Pressable>
         ) : null}
         {title ? (
-          <Text variant="title" style={{ flexGrow: 1, flexShrink: 1, flexBasis: HEADER_TITLE_BASIS, paddingVertical: 2 }}>
+          <Text variant={titleVariant} accessibilityRole="header" style={{ flexGrow: 1, flexShrink: 1, flexBasis: HEADER_TITLE_BASIS, paddingVertical: 2 }}>
             {title}
           </Text>
         ) : (

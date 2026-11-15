@@ -29,7 +29,7 @@ export function RowCard({ pic, weave, row, onRestart }: RowCardProps) {
     return (
       <Panel variant="hero" testID="picture-row-card" accessibilityLabel={copy.finished}>
         <View accessibilityLiveRegion="polite">
-          <Text variant="rowNumber">{copy.finished}</Text>
+          <Text variant="display">{copy.finished}</Text>
           <Text color="muted" style={{ marginTop: theme.spacing.xs }}>
             {copy.finishedSub(pic.H)}
           </Text>
@@ -44,8 +44,8 @@ export function RowCard({ pic, weave, row, onRestart }: RowCardProps) {
     <Panel variant="hero" testID="picture-row-card">
       <View accessibilityLiveRegion="polite" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: theme.spacing.sm }}>
         <View accessible accessibilityRole="header" accessibilityLabel={`${copy.row(info.row)} ${copy.of(pic.H)}`} style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-          <Text variant="rowNumber">{copy.row(info.row)}</Text>
-          <Text variant="hint" weight="medium" tabular style={{ fontSize: 16 }}>
+          <Text variant="display">{copy.row(info.row)}</Text>
+          <Text color="muted" weight="medium" tabular>
             {copy.of(pic.H)}
           </Text>
         </View>
