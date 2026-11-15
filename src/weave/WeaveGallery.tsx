@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { TWILL, picRowInfo, rowInfo, stats, threaded, type ColorKey, type PaletteColor, type PatternSetup, type PictureGrid, type Structure } from '@/engine';
-import { Button, Collapsible, Panel, Text, useTheme } from '@/ui';
+import { Button, Chip, Collapsible, Panel, Text, useTheme } from '@/ui';
 
 import { DirectionPill, EdgeTip, RepeatChips, SectionChips, StepChips, WeftTag } from './chips';
 import { weaveCopy } from './copy';
@@ -156,13 +156,15 @@ function PictureDemo({ title, pic, startRow, maxHeight }: { title: string; pic: 
   const info = row <= pic.H ? picRowInfo(pic, 'twill22', row) : null;
   return (
     <Section title={title}>
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
-        <Text variant="rowNumber">{info ? `Row ${row}` : 'Finished'}</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', gap: 8 }}>
+        <Text variant="display">{info ? `Row ${row}` : 'Finished'}</Text>
         {info ? (
           <Text color="muted" weight="medium">
             of {pic.H}
           </Text>
-        ) : null}
+        ) : (
+          <Chip label="Finished" tone="mint" icon="check" size="md" />
+        )}
       </View>
       {info ? (
         <>
@@ -187,8 +189,8 @@ export function WeaveGallery() {
   const big = useMemo(() => bigPicture(), []);
   return (
     <View testID="weave-gallery" style={{ backgroundColor: theme.colors.bg }}>
-      <View style={{ width: '100%', maxWidth: theme.maxContentWidth, alignSelf: 'center', paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.xl }}>
-        <Text variant="title" style={{ marginBottom: theme.spacing.lg }}>
+      <View style={{ width: '100%', maxWidth: theme.maxContentWidth, alignSelf: 'center', paddingHorizontal: theme.spacing.gutter, paddingTop: theme.spacing.xl }}>
+        <Text variant="title" style={{ marginBottom: theme.spacing.xl }}>
           Weave components
         </Text>
         <PatternDemo name="2/2 twill" stitch={twill22} warps={24} />
@@ -196,6 +198,7 @@ export function WeaveGallery() {
         <PatternDemo name="Herringbone" stitch={herring} warps={24} startRow={12} />
         <PatternDemo name="Herringbone" stitch={herring} warps={120} startRow={3} full={false} />
         <PictureDemo title="Picture, 24 warps by 20 rows" pic={small} startRow={5} />
+        <PictureDemo title="Picture, finished" pic={small} startRow={small.H + 1} />
         <PictureDemo title="Picture, 120 warps by 400 rows" pic={big} startRow={120} maxHeight={320} />
       </View>
     </View>

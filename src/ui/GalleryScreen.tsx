@@ -3,11 +3,12 @@ import { View } from 'react-native';
 
 import { Button } from './Button';
 import { ColorField } from './ColorField';
-import { Checkbox, Chip, SearchField, Segmented, Stepper, Swatch, Tip } from './controls';
+import { Checkbox, Chip, SearchField, Segmented, Stepper, Swatch, TextField, Tip, type ChipTone } from './controls';
 import { Icon, iconNames } from './Icon';
 import { BottomBar, Collapsible, EmptyState, Header, Panel, Screen, Sheet } from './layout';
+import { PaperShape } from './PaperShape';
 import { Text } from './Text';
-import { useTheme, useThemePreference, type ColorToken, type ThemePreference } from './theme';
+import { useTheme, useThemePreference, type ColorToken, type ShadowName, type ThemePreference } from './theme';
 
 const themeOptions = [
   { value: 'system', label: 'System' },
@@ -15,7 +16,13 @@ const themeOptions = [
   { value: 'dark', label: 'Dark' },
 ] as const;
 
-const tokens: ColorToken[] = ['bg', 'surface', 'ink', 'muted', 'line', 'weft', 'weftInk', 'warp', 'warpShade', 'mark', 'overChip', 'underChip', 'warn', 'warnBg', 'btn', 'btnInk'];
+const tokens: ColorToken[] = [
+  'bg', 'surface', 'surfaceAlt', 'ink', 'muted', 'graphite', 'stone', 'line', 'cloud',
+  'mint', 'marigold', 'periwinkle', 'pastelInk', 'papaya',
+  'weft', 'weftInk', 'warp', 'warpShade', 'mark', 'overChip', 'underChip', 'warn', 'warnBg', 'btn', 'btnInk',
+];
+const chipTones: ChipTone[] = ['neutral', 'outline', 'over', 'weft', 'mint', 'marigold', 'periwinkle'];
+const shadowNames: ShadowName[] = ['float', 'lift', 'bar', 'segment'];
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   const theme = useTheme();
@@ -47,6 +54,7 @@ export function GalleryScreen() {
   const [category, setCategory] = useState('All');
   const [sheet, setSheet] = useState(false);
   const [row, setRow] = useState(37);
+  const [name, setName] = useState('Blue scarf');
 
   return (
     <Screen
@@ -73,12 +81,25 @@ export function GalleryScreen() {
         </Row>
       </Section>
 
+      <View style={{ minHeight: 132, justifyContent: 'center', marginBottom: theme.spacing.cardGap }}>
+        <PaperShape color="marigold" seed={4} width={150} height={110} rotate={-6} dots style={{ top: 4, right: -8 }} />
+        <PaperShape color="sky" seed={9} width={96} height={84} rotate={5} style={{ top: 36, right: 120 }} />
+        <Text variant="title">Paper shapes</Text>
+        <Text variant="hint" style={{ maxWidth: 200 }}>
+          Torn-paper accents sit behind titles and cards.
+        </Text>
+      </View>
+
       <Section title="Text">
-        <Text variant="title">Title 28 bold</Text>
-        <Text variant="heading">Heading 17 semibold</Text>
+        <Text variant="display">Display 46</Text>
+        <Text variant="title">Title 34 serif</Text>
+        <Text variant="subtitle">Subtitle 24 serif</Text>
+        <Text variant="heading">Heading 18 semibold</Text>
         <Text>Body 16. Set your warp, pick a pattern or a picture, then weave one row at a time.</Text>
-        <Text variant="hint">Hint 14 muted. Fits a loom at least 12 cm wide.</Text>
         <Text variant="label">Label 14 medium</Text>
+        <Text variant="hint">Hint 14 muted. Fits a loom at least 12 cm wide.</Text>
+        <Text variant="caption">Caption 12. Warps 1–24</Text>
+        <Text color="graphite">Graphite: emphasised secondary text.</Text>
         <Row>
           <Text variant="rowNumber">37</Text>
           <Text color="muted" weight="medium">
@@ -110,7 +131,21 @@ export function GalleryScreen() {
           <Button icon="trash" accessibilityLabel="Delete" />
           <Button icon="heart" accessibilityLabel="Favorite" selected={fav} onPress={() => setFav(!fav)} />
         </Row>
+        <Row>
+          <Button label="Large" size="lg" icon="chevron-left" />
+          <Button label="Large primary" size="lg" variant="primary" trailingIcon="chevron-right" />
+        </Row>
         <Button label="Full width" variant="primary" fullWidth icon="photo" />
+      </Section>
+
+      <Section title="Shadows">
+        <Row>
+          {shadowNames.map((s) => (
+            <View key={s} style={[{ width: 96, height: 64, borderRadius: theme.radii.field, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', margin: 6 }, theme.shadows[s]]}>
+              <Text variant="caption">{s}</Text>
+            </View>
+          ))}
+        </Row>
       </Section>
 
       <Section title="Segmented, stepper, checkbox">
@@ -141,7 +176,12 @@ export function GalleryScreen() {
           <Chip label="Over 2" tone="weft" />
           <Chip label="Under 2" />
           <Chip label="Row 3 of 4" selected />
-          <Chip label="Outline" tone="outline" />
+          <Chip label="Finished" tone="mint" icon="check" size="md" />
+        </Row>
+        <Row>
+          {chipTones.map((tone) => (
+            <Chip key={tone} label={tone} tone={tone} />
+          ))}
         </Row>
         <Row>
           {['All', 'Twill', 'Plain', 'Texture'].map((c) => (
@@ -164,8 +204,11 @@ export function GalleryScreen() {
         </Row>
       </Section>
 
-      <Section title="Search, sheet">
+      <Section title="Search, text field, sheet">
         <SearchField value={query} onChangeText={setQuery} placeholder="Search stitches" />
+        <Text variant="label">Project name</Text>
+        <TextField value={name} onChangeText={setName} accessibilityLabel="Project name" placeholder="Name" />
+        <TextField value="#12XZ" onChangeText={() => {}} accessibilityLabel="Invalid example" invalid tabular />
         <Button label="Open sheet" onPress={() => setSheet(true)} />
         <Sheet visible={sheet} onClose={() => setSheet(false)} title="A sheet">
           <Text>Anything can go here.</Text>
@@ -174,7 +217,7 @@ export function GalleryScreen() {
       </Section>
 
       <Panel variant="hero">
-        <Text variant="label">Hero panel</Text>
+        <Text variant="label">Hero panel: radius 24, float shadow</Text>
         <Row>
           <Text variant="rowNumber">{row}</Text>
           <Chip label="Left to right" tone="over" icon="arrow-long-right" size="md" />
@@ -188,7 +231,7 @@ export function GalleryScreen() {
       </Panel>
 
       <Panel>
-        <EmptyState icon="queue-list" title="No projects yet" message="Pick a stitch or start from a picture." action={<Button label="New from picture" icon="photo" variant="primary" />} />
+        <EmptyState icon="queue-list" paper="mint" title="No projects yet" message="Pick a stitch or start from a picture." action={<Button label="New from picture" icon="photo" variant="primary" />} />
       </Panel>
 
       <Section title="Icons">

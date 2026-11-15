@@ -5,8 +5,9 @@ import { Chip, Icon, Swatch, Text, Tip, useTheme } from '@/ui';
 
 import { weaveCopy } from './copy';
 
-const listStyle: ViewStyle = { flexDirection: 'row', flexWrap: 'wrap', gap: 7 };
-const boxStyle: ViewStyle = { alignItems: 'flex-start', paddingVertical: 7, paddingHorizontal: 11, borderRadius: 10, borderWidth: 1, minWidth: 74 };
+const listStyle: ViewStyle = { flexDirection: 'row', flexWrap: 'wrap', gap: 8 };
+/** Steps and sections: radius 14 (not pills), so they read as steps. */
+const boxStyle: ViewStyle = { alignItems: 'flex-start', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, minWidth: 76 };
 
 export type StepChipsProps = {
   /** In travel order (`RowInfo.runs`). */
@@ -37,14 +38,14 @@ export function StepChips({ runs, row, ltr, weftColor, style, testID }: StepChip
           <View
             key={x.from}
             testID={testID ? `${testID}-step` : undefined}
-            style={[boxStyle, { backgroundColor: x.over ? colors.weft : colors.underChip, borderColor: x.over ? colors.weft : colors.warpShade }]}>
+            style={[boxStyle, { backgroundColor: x.over ? colors.weft : colors.underChip, borderColor: x.over ? colors.weft : colors.line }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               {x.over && weftColor ? <Swatch color={weftColor} size={12} style={{ borderColor: colors.weftInk }} /> : null}
-              <Text weight="bold" color={ink} style={{ fontSize: 17, lineHeight: 23 }}>
+              <Text weight="semibold" color={ink} style={{ fontSize: 17, lineHeight: 24, letterSpacing: -0.2 }}>
                 {weaveCopy.word(x.over, x.n)}
               </Text>
             </View>
-            <Text tabular color={ink} style={{ fontSize: 12.5, lineHeight: 17, opacity: 0.85 }}>
+            <Text variant="caption" tabular color={ink} style={{ opacity: 0.8 }}>
               {weaveCopy.warpRange(x.from, x.to)}
             </Text>
           </View>
@@ -81,11 +82,11 @@ export function SectionChips({ sections, palette, row, style, testID }: SectionC
             style={[boxStyle, { backgroundColor: colors.surface, borderColor: colors.line }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <Swatch color={color?.hex ?? 'transparent'} />
-              <Text weight="bold" style={{ fontSize: 17, lineHeight: 23 }}>
+              <Text weight="semibold" style={{ fontSize: 17, lineHeight: 24, letterSpacing: -0.2 }}>
                 {name}
               </Text>
             </View>
-            <Text tabular style={{ fontSize: 12.5, lineHeight: 17, opacity: 0.85 }}>
+            <Text variant="caption" tabular color="graphite">
               {detail}
             </Text>
           </View>
@@ -104,12 +105,12 @@ export type RepeatChipsProps = {
   testID?: string;
 };
 
-/** The rows of the repeat as small pills, with the current one filled. */
+/** The rows of the repeat as small pills: the current one marigold, the others outlined. */
 export function RepeatChips({ labels, current, style, testID }: RepeatChipsProps) {
   return (
     <View testID={testID} accessibilityRole="list" accessibilityLabel={weaveCopy.repeatLabel} style={[{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }, style]}>
       {labels.map((label, j) => (
-        <Chip key={j} label={`${weaveCopy.repeatRowNumber(j + 1)} ${label}`} selected={j + 1 === current} />
+        <Chip key={j} label={`${weaveCopy.repeatRowNumber(j + 1)} ${label}`} tone={j + 1 === current ? 'marigold' : 'outline'} />
       ))}
     </View>
   );
@@ -122,7 +123,7 @@ export type DirectionPillProps = {
   testID?: string;
 };
 
-/** "Left to right →" or "← Right to left". */
+/** "Left to right →" or "← Right to left": a periwinkle pill with `pastelInk` text. */
 export function DirectionPill({ ltr, style, testID }: DirectionPillProps) {
   const theme = useTheme();
   const label = ltr ? weaveCopy.leftToRight : weaveCopy.rightToLeft;
@@ -132,14 +133,14 @@ export function DirectionPill({ ltr, style, testID }: DirectionPillProps) {
       accessible
       accessibilityLabel={label}
       style={[
-        { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingVertical: 6, paddingHorizontal: 11, borderRadius: theme.radii.chip, backgroundColor: theme.colors.overChip },
+        { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingVertical: 7, paddingHorizontal: 14, borderRadius: theme.radii.pill, backgroundColor: theme.colors.overChip },
         style,
       ]}>
-      {ltr ? null : <Icon name="arrow-long-left" size={22} />}
-      <Text weight="semibold" style={{ fontSize: 17, lineHeight: 23 }}>
+      {ltr ? null : <Icon name="arrow-long-left" size={22} color="pastelInk" />}
+      <Text weight="semibold" color="pastelInk" style={{ fontSize: 17, lineHeight: 24, letterSpacing: -0.2 }}>
         {label}
       </Text>
-      {ltr ? <Icon name="arrow-long-right" size={22} /> : null}
+      {ltr ? <Icon name="arrow-long-right" size={22} color="pastelInk" /> : null}
     </View>
   );
 }
@@ -173,7 +174,7 @@ export type WeftTagProps = {
 export function WeftTag({ color, label, style, testID }: WeftTagProps) {
   return (
     <View testID={testID} style={[{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6 }, style]}>
-      <Swatch color={color} />
+      <Swatch color={color} size={18} radius={6} />
       <Text weight="semibold">{label}</Text>
     </View>
   );

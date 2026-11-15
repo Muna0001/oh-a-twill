@@ -34,9 +34,11 @@ export function TabBarItem({ icon, label, isFocused, href: _href, ref, style: _s
         paddingVertical: 6,
         borderRadius: theme.radii.button,
         cursor: 'pointer',
-        opacity: pressed ? 0.6 : 1,
+        opacity: pressed ? 0.7 : 1,
       })}>
-      <Icon name={icon} size={24} color={tint} strokeWidth={1.8} />
+      <View style={{ width: 56, height: 30, borderRadius: theme.radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: focused ? theme.colors.cloud : 'transparent' }}>
+        <Icon name={icon} size={24} color={tint} strokeWidth={1.8} />
+      </View>
       <Text color={tint} weight={focused ? 'semibold' : 'medium'} numberOfLines={1} maxFontSizeMultiplier={1.4} style={{ fontSize: 12, lineHeight: 16 }}>
         {label}
       </Text>
@@ -44,20 +46,23 @@ export function TabBarItem({ icon, label, isFocused, href: _href, ref, style: _s
   );
 }
 
-/** The bar itself: surface, top border, bottom safe-area padding, content centred at max width 720. */
+/** The bar itself: surface, `bar` shadow (plus a top line in dark mode), bottom safe-area padding, content centred at max width 720. */
 export function TabBarFrame({ children }: { children?: ReactNode; style?: unknown }) {
   const theme = useTheme();
   const insets = useInsets();
   return (
     <View
-      style={{
-        backgroundColor: theme.colors.surface,
-        borderTopWidth: 1,
-        borderTopColor: theme.colors.line,
-        paddingBottom: insets.bottom,
-        paddingLeft: insets.left,
-        paddingRight: insets.right,
-      }}>
+      style={[
+        {
+          backgroundColor: theme.colors.surface,
+          borderTopWidth: theme.scheme === 'dark' ? 1 : 0,
+          borderTopColor: theme.colors.line,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        },
+        theme.shadows.bar,
+      ]}>
       <View
         style={{
           width: '100%',
@@ -65,7 +70,7 @@ export function TabBarFrame({ children }: { children?: ReactNode; style?: unknow
           alignSelf: 'center',
           flexDirection: 'row',
           paddingHorizontal: theme.spacing.sm,
-          paddingTop: 2,
+          paddingTop: 4,
         }}>
         {children}
       </View>
