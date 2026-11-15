@@ -15,7 +15,8 @@ import {
   quickStart,
   rowDone,
   rowLabel,
-  stepTexts,
+  startHint,
+  stepSentence,
   tab,
   visibleTestId,
   waitForRow,
@@ -68,9 +69,10 @@ for (const { name: browserName, browser } of list) {
         await rowDone(page, 1);
         await waitForRow(page, 2);
         assert.match(await visibleTestId(page, 'guide-direction').innerText(), /Right to left/);
-        const steps = await stepTexts(page);
-        assert.equal(steps[0], 'Over 1 · warp 24');
-        assert.equal(steps.at(-1), 'Over 1 · warp 1');
+        assert.equal(await startHint(page), 'Start: over 1 at warp 24');
+        const sentence = await stepSentence(page);
+        assert.match(sentence, /^Row 2, right to left: over 1, under 2, /);
+        assert.match(sentence, /, over 1$/);
         assertNoErrors(errors, 'row 2');
         await context.close();
       });
@@ -101,7 +103,8 @@ for (const { name: browserName, browser } of list) {
         await page.waitForURL(`**/project/${id}`);
         await visibleTestId(page, 'pattern-guide').waitFor();
         await waitForRow(page, 2);
-        assert.match(await visibleTestId(page, 'guide-setup').innerText(), /28 warps/);
+        // Row 2 now starts at the far edge of 28 warps.
+        assert.equal(await startHint(page), 'Start: over 1 at warp 28');
         // Back on the guide the keys work again.
         await page.keyboard.press('ArrowLeft');
         await waitForRow(page, 1);

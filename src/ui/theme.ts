@@ -10,6 +10,21 @@ import {
 import { useColorScheme, type TextStyle, type ViewStyle } from 'react-native';
 
 import { fontFamilies, serifFamily, systemSerif } from './fonts';
+import {
+  color,
+  font,
+  fontWeight,
+  gradient,
+  layout,
+  radius,
+  shadow,
+  spacing as space,
+  text,
+  typography,
+  type ShadowToken,
+  type TextStep,
+  type TypographyStep,
+} from './tokens';
 
 export type ThemeScheme = 'light' | 'dark';
 export type ThemePreference = 'system' | ThemeScheme;
@@ -67,34 +82,46 @@ export type ColorToken = keyof ThemeColors;
 /** Pastel fills that take `pastelInk` text. */
 export type PastelToken = 'mint' | 'marigold' | 'periwinkle';
 
-const pastels = { mint: '#9BD8A9', marigold: '#FDE99B', periwinkle: '#B8CAF5', pastelInk: '#030302' } as const;
+/** Mixes two `#rrggbb` colours: `t` = 0 gives `a`, 1 gives `b`. */
+function mix(a: string, b: string, t: number): string {
+  const ch = (h: string, i: number) => parseInt(h.slice(1 + i * 2, 3 + i * 2), 16);
+  return `#${[0, 1, 2].map((i) => Math.round(ch(a, i) + (ch(b, i) - ch(a, i)) * t).toString(16).padStart(2, '0')).join('')}`;
+}
 
-/** "Paper scrapbook" tokens (docs/design.md). Yarn colours are content and never go through here. */
+/**
+ * Light theme: every value comes from design/tokens.json via `tokens.ts` (docs/design.md,
+ * "Token source of truth"). Yarn colours are content and never go through here.
+ */
 export const lightColors: ThemeColors = {
-  bg: '#FFF3E7',
-  surface: '#FFFFFF',
-  surfaceAlt: '#F7F2EC',
-  ink: '#030302',
-  muted: '#5C5852',
-  graphite: '#41413F',
-  stone: '#BEBBBA',
-  line: '#E1E1E1',
-  cloud: '#EFEFEF',
-  ...pastels,
-  papaya: '#FF4500',
-  weft: '#030302',
-  weftInk: '#FFFFFF',
-  warp: '#E9DCCB',
-  warpShade: '#CDBBA3',
-  mark: '#FF4500',
-  overChip: pastels.periwinkle,
-  underChip: '#FFFFFF',
-  warn: '#030302',
-  warnBg: pastels.marigold,
-  btn: '#030302',
-  btnInk: '#FFFFFF',
+  bg: color.canvas,
+  surface: color.white,
+  surfaceAlt: color.linen,
+  ink: color.ink,
+  muted: color.graphite,
+  graphite: color.graphite,
+  stone: color.stone,
+  line: color.ash,
+  cloud: color.cloud,
+  mint: color.mint,
+  marigold: color.marigold,
+  periwinkle: color.periwinkle,
+  pastelInk: color.ink,
+  papaya: color.papaya,
+  weft: color.ink,
+  weftInk: color.white,
+  // The tokens have no warp colour: neutral threads are canvas toned down with graphite.
+  warp: mix(color.canvas, color.graphite, 0.12),
+  warpShade: mix(color.canvas, color.graphite, 0.24),
+  mark: color.papaya,
+  overChip: color.periwinkle,
+  underChip: color.white,
+  warn: color.ink,
+  warnBg: color.marigold,
+  btn: color.ink,
+  btnInk: color.white,
 };
 
+/** Dark theme: derived by us (the tokens are light only), same roles. Pastels and `pastelInk` stay as in light. */
 export const darkColors: ThemeColors = {
   bg: '#17130F',
   surface: '#221D18',
@@ -105,34 +132,64 @@ export const darkColors: ThemeColors = {
   stone: '#6E665E',
   line: '#3A332C',
   cloud: '#2F2923',
-  ...pastels,
+  mint: color.mint,
+  marigold: color.marigold,
+  periwinkle: color.periwinkle,
+  pastelInk: color.ink,
   papaya: '#FF7A45',
   weft: '#FFF3E7',
   weftInk: '#17130F',
   warp: '#5A5148',
   warpShade: '#6E6359',
   mark: '#FF7A45',
-  overChip: pastels.periwinkle,
+  overChip: color.periwinkle,
   underChip: '#2A241E',
-  warn: '#030302',
-  warnBg: pastels.marigold,
+  warn: color.ink,
+  warnBg: color.marigold,
   btn: '#FFF3E7',
   btnInk: '#17130F',
 };
 
-/** `sky` fill of PaperShape only: a gradient, top to bottom. */
-export const skyGradient = ['#9ED4EF', '#D1EEF9'] as const;
+/** `sky` fill of PaperShape only (`--gradient-sky`), top to bottom. Drawn in sRGB: SVG cannot interpolate `in oklab`. */
+export const skyGradient = gradient.sky.stops;
 
-/** 4 px base. `gutter` is the screen's side padding, `card` a card's padding (`cardNarrow` under 360 px), `cardGap` the space between cards. */
-export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28, gutter: 20, card: 24, cardNarrow: 20, cardGap: 20 } as const;
 /**
- * `panel` cards 20, `hero` cards and the sheet's top 24, `button` and `field` (inputs, steppers,
- * step chips, wells, tips) 14, `chip` / `pill` fully round, `swatch` 6, `cell` small grid cells 2.
+ * Role names on the token spacing scale (`tokens.spacing`). `gutter` is the screen's side
+ * padding, `card` a card's padding (`--card-padding`; `cardNarrow` under 360 px), `cardGap` the
+ * space between cards.
  */
-export const radii = { panel: 20, hero: 24, sheet: 24, button: 14, field: 14, chip: 9999, pill: 9999, swatch: 6, cell: 2 } as const;
-/** Minimum touch target, in points. */
+export const spacing = {
+  xs: space[4],
+  sm: space[8],
+  md: space[12],
+  lg: space[16],
+  xl: space[20],
+  xxl: space[32],
+  gutter: space[20],
+  card: layout['card-padding'],
+  cardNarrow: space[20],
+  cardGap: space[20],
+} as const;
+/**
+ * Role names on the token radii: `panel` cards (`2xl`), `hero` cards and the sheet's top (`3xl`),
+ * `button` and `field` (inputs, steppers, step chips, wells, tips: `buttons` / `inputs`),
+ * `chip` / `pill` (`pills`), `swatch` and `frame` (`md`). `cell` (2) is for grid cells: a drawing, not a UI surface.
+ */
+export const radii = {
+  panel: radius['2xl'],
+  hero: radius['3xl'],
+  sheet: radius['3xl'],
+  button: radius.buttons,
+  field: radius.inputs,
+  chip: radius.pills,
+  pill: radius.pills,
+  swatch: radius.md,
+  frame: radius.md,
+  cell: 2,
+} as const;
+/** Minimum touch target, in points (platform guideline, not a design token). */
 export const minTouch = 44;
-/** Width of the single content column on wide screens. */
+/** Width of the single content column on wide screens (an app column, not `--page-max-width`). */
 export const maxContentWidth = 720;
 /** Below this window width a card's padding drops from 24 to 20. */
 export const narrowWidth = 360;
@@ -141,7 +198,18 @@ export type FontWeightName = 'regular' | 'medium' | 'semibold' | 'bold';
 /** A text face: one of the sans weights, or the serif (headings of 24 px and up only). */
 export type FontFace = FontWeightName | 'serif';
 
-export type TypeVariant = 'display' | 'title' | 'subtitle' | 'heading' | 'body' | 'label' | 'hint' | 'caption' | 'rowNumber';
+export type TypeVariant =
+  | 'display'
+  | 'title'
+  | 'subtitle'
+  | 'heading'
+  | 'body'
+  | 'label'
+  | 'hint'
+  | 'caption'
+  | 'button'
+  | 'chip'
+  | 'rowNumber';
 
 export type TypeSpec = {
   fontSize: number;
@@ -152,17 +220,38 @@ export type TypeSpec = {
   color: ColorToken;
 };
 
-const display: TypeSpec = { fontSize: 46, lineHeight: 50, face: 'serif', letterSpacing: -1.38, color: 'ink' };
+const faceOf = (weight: number): FontWeightName =>
+  weight >= fontWeight.bold ? 'bold' : weight >= fontWeight.semibold ? 'semibold' : weight >= fontWeight.medium ? 'medium' : 'regular';
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
+/** From a CSS text step (`--text-*`: tracking already in px). */
+function fromText(step: TextStep, face: FontFace, tone: ColorToken = 'ink'): TypeSpec {
+  const t = text[step];
+  return { fontSize: t.fontSize, lineHeight: Math.round(t.fontSize * t.lineHeight), letterSpacing: t.letterSpacing, face, color: tone };
+}
+/** From a typography step (letter spacing in em, converted to px). Serif steps map to the serif face. */
+function fromStep(step: TypographyStep, tone: ColorToken = 'ink'): TypeSpec {
+  const t = typography[step];
+  const face: FontFace = t.fontFamily === font.untitledseriffont.family ? 'serif' : faceOf(t.fontWeight);
+  return { fontSize: t.fontSize, lineHeight: Math.round(t.fontSize * t.lineHeight), letterSpacing: round2(t.letterSpacingEm * t.fontSize), face, color: tone };
+}
+
+const display = fromText('heading', 'serif');
+
+/** Variants mapped to the named token steps (docs/design.md, "Type"). */
 export const typeScale: Record<TypeVariant, TypeSpec> = {
   display,
-  title: { fontSize: 34, lineHeight: 40, face: 'serif', letterSpacing: -0.68, color: 'ink' },
-  subtitle: { fontSize: 24, lineHeight: 30, face: 'serif', letterSpacing: -0.48, color: 'ink' },
-  heading: { fontSize: 18, lineHeight: 26, face: 'semibold', letterSpacing: -0.27, color: 'ink' },
-  body: { fontSize: 16, lineHeight: 24, face: 'regular', letterSpacing: -0.24, color: 'ink' },
-  label: { fontSize: 14, lineHeight: 21, face: 'medium', letterSpacing: 0.14, color: 'muted' },
-  hint: { fontSize: 14, lineHeight: 21, face: 'regular', letterSpacing: 0.14, color: 'muted' },
-  caption: { fontSize: 12, lineHeight: 18, face: 'regular', letterSpacing: 0.12, color: 'muted' },
+  title: fromText('heading-sm', 'serif'),
+  subtitle: fromStep('2xl'),
+  heading: fromStep('lg'),
+  body: fromText('body', 'regular'),
+  label: fromStep('sm-4', 'muted'),
+  hint: fromText('body-sm', 'regular', 'muted'),
+  caption: fromText('caption', 'regular', 'muted'),
+  /** Button labels (`base-5`). */
+  button: fromStep('base-5'),
+  /** Chip labels (`sm-6`). */
+  chip: fromStep('sm-6'),
   /** Alias of `display`. */
   rowNumber: display,
 };
@@ -187,43 +276,83 @@ const loadedFaces: Record<FontFace, TextStyle> = {
   serif: { fontFamily: serifFamily },
 };
 
-export type ShadowName = 'float' | 'lift' | 'bar' | 'segment';
+/**
+ * Shadows by token name (`xl`, `sm`, `md`, `md-2`, `subtle`, `md-3`), plus role aliases:
+ * `float` = `xl` (cards), `lift` = `md` (hovered or pressed buttons, sheets), `bar` = `subtle`
+ * mirrored to point up (tab bar, bottom bar), `segment` = `subtle` (segmented thumb), `hover` =
+ * `md-3` (card hover on web).
+ */
+export type ShadowName = ShadowToken | 'float' | 'lift' | 'bar' | 'segment' | 'hover';
 /** View styles carrying a `boxShadow` (iOS, Android and web on React Native 0.88). */
 export type ThemeShadows = Record<ShadowName, ViewStyle> & { none: ViewStyle };
 
-/** Layered shadows; `k` scales the opacities (dark mode uses about 2.5×). */
+/** Splits a CSS shadow list on the commas outside parentheses. */
+function layers(css: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let cur = '';
+  for (const c of css) {
+    if (c === '(') depth++;
+    if (c === ')') depth--;
+    if (c === ',' && depth === 0) {
+      out.push(cur.trim());
+      cur = '';
+    } else cur += c;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out;
+}
+
+/** A token shadow with its alphas scaled by `k` and, with `up`, its y offsets mirrored. */
+function adjust(css: string, k: number, up = false): string {
+  return layers(css)
+    .map((layer) => {
+      let out = layer.replace(/rgba\(([^)]*)\)/, (_m, args: string) => {
+        const parts = args.split(',').map((p) => p.trim());
+        parts[3] = String(Math.min(1, round2(Number(parts[3] ?? 1) * k)));
+        return `rgba(${parts.join(', ')})`;
+      });
+      if (up) {
+        // Lengths after the colour: x, y, blur, spread. Flip y.
+        let n = 0;
+        out = out.replace(/(-?\d*\.?\d+)px/g, (m, v: string) => (++n === 2 ? `${-Number(v)}px` : m));
+      }
+      return out;
+    })
+    .join(', ');
+}
+
 function makeShadows(k: number): ThemeShadows {
-  const a = (alpha: number) => `rgba(0,0,0,${Math.min(1, +(alpha * k).toFixed(3))})`;
+  const by = Object.fromEntries((Object.keys(shadow) as ShadowToken[]).map((name) => [name, { boxShadow: adjust(shadow[name], k) }])) as Record<ShadowToken, ViewStyle>;
   return {
-    /** Cards, panels, hero row card. */
-    float: { boxShadow: `0 50px 40px ${a(0.01)}, 0 50px 40px ${a(0.02)}, 0 20px 40px ${a(0.05)}, 0 3px 10px ${a(0.08)}` },
-    /** Hovered or pressed buttons, sheets, popovers. */
-    lift: { boxShadow: `0 12px 12px 2px ${a(0.1)}, 0 2px 4px -1px ${a(0.06)}` },
-    /** Tab bar and bottom bar: points up. */
-    bar: { boxShadow: `0 -1px 3px ${a(0.1)}, 0 -1px 2px -1px ${a(0.1)}` },
-    /** The `bar` layers pointing down: the selected segment of a Segmented control. */
-    segment: { boxShadow: `0 1px 3px ${a(0.1)}, 0 1px 2px -1px ${a(0.1)}` },
+    ...by,
+    float: by.xl,
+    lift: by.md,
+    bar: { boxShadow: adjust(shadow.subtle, k, true) },
+    segment: by.subtle,
+    hover: by['md-3'],
     none: { boxShadow: 'none' },
   };
 }
 
 const lightShadows = makeShadows(1);
+/** Shadows barely show on a dark desk: same shapes, 2.5× the opacity. */
 const darkShadows = makeShadows(2.5);
 
 export type ThemeCards = {
-  /** Panel look: surface, radius 20, `float` shadow, 1 px `line` border in dark mode only. No padding. */
+  /** Panel look: surface, radius `2xl`, `xl` shadow, 1 px `line` border in dark mode only. No padding. */
   card: ViewStyle;
-  /** Hero look: as `card` with radius 24. */
+  /** Hero look: as `card` with radius `3xl`. */
   hero: ViewStyle;
-  /** Inset well for strips and grids: `surfaceAlt`, radius 14. No padding. */
+  /** Inset well for strips and grids: `surfaceAlt` (linen), radius `xl`. No padding. */
   well: ViewStyle;
 };
 
 function makeCards(colors: ThemeColors, shadows: ThemeShadows, dark: boolean): ThemeCards {
   const border: ViewStyle = dark ? { borderWidth: 1, borderColor: colors.line } : { borderWidth: 0 };
   return {
-    card: { backgroundColor: colors.surface, borderRadius: radii.panel, ...border, ...shadows.float },
-    hero: { backgroundColor: colors.surface, borderRadius: radii.hero, ...border, ...shadows.float },
+    card: { backgroundColor: colors.surface, borderRadius: radii.panel, ...border, ...shadows.xl },
+    hero: { backgroundColor: colors.surface, borderRadius: radii.hero, ...border, ...shadows.xl },
     well: { backgroundColor: colors.surfaceAlt, borderRadius: radii.field },
   };
 }
@@ -234,7 +363,7 @@ export type Theme = {
   spacing: typeof spacing;
   radii: typeof radii;
   type: typeof typeScale;
-  /** `{ ...theme.shadows.float }` in a view style. */
+  /** `theme.shadows.xl` (or its role alias `float`) in a view style. */
   shadows: ThemeShadows;
   /** Ready-made surfaces: `[theme.cards.card, { padding: theme.spacing.card }]`. */
   cards: ThemeCards;

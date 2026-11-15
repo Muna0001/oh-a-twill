@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 
+import { CompactBarContext } from './barContext';
 import { Button } from './Button';
 import { uiCopy } from './copy';
 import { Icon, type IconName } from './Icon';
@@ -191,7 +192,7 @@ export function Header({ title, titleVariant = 'title', subtitle, back, onBack, 
             style={({ pressed }) => ({
               width: theme.minTouch,
               height: theme.minTouch,
-              marginLeft: -10,
+              marginLeft: -8,
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: theme.radii.pill,
@@ -230,50 +231,60 @@ export type BottomBarProps = {
   testID?: string;
 };
 
-/** Bar pinned under the content. Pass it to `Screen`'s `footer`. Pads the bottom safe area itself. */
+/**
+ * Bar pinned under the content. Pass it to `Screen`'s `footer`. Pads the bottom safe area itself.
+ * A string centre label stays on one line; under 360 pt the bar and its `lg` buttons tighten up
+ * (less padding, no trailing chevron) so it fits. With the text zoomed far up, `right` wraps below.
+ */
 export function BottomBar({ left, center, right, testID }: BottomBarProps) {
   const theme = useTheme();
   const insets = useInsets();
+  const { width } = useWindowDimensions();
+  const compact = width > 0 && width < narrowWidth;
+  const label = typeof center === 'string' || typeof center === 'number';
   return (
-    <View
-      testID={testID}
-      style={[
-        {
-          backgroundColor: theme.colors.surface,
-          // Light mode leans on the shadow alone; dark mode also needs the line.
-          borderTopWidth: theme.scheme === 'dark' ? 1 : 0,
-          borderTopColor: theme.colors.line,
-          paddingTop: 12,
-          paddingBottom: 12 + insets.bottom,
-          paddingHorizontal: theme.spacing.gutter,
-        },
-        theme.shadows.bar,
-      ]}>
+    <CompactBarContext.Provider value={compact}>
       <View
-        style={{
-          width: '100%',
-          maxWidth: theme.maxContentWidth,
-          alignSelf: 'center',
-          flexDirection: 'row',
-          // Wraps only when the text is zoomed far up on a narrow screen.
-          flexWrap: 'wrap',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: theme.spacing.md,
-        }}>
-        {left}
-        <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, alignItems: 'center' }}>
-          {typeof center === 'string' || typeof center === 'number' ? (
-            <Text weight="semibold" tabular align="center" accessibilityLiveRegion="polite">
-              {center}
-            </Text>
-          ) : (
-            center
-          )}
+        testID={testID}
+        style={[
+          {
+            backgroundColor: theme.colors.surface,
+            // Light mode leans on the shadow alone; dark mode also needs the line.
+            borderTopWidth: theme.scheme === 'dark' ? 1 : 0,
+            borderTopColor: theme.colors.line,
+            paddingTop: 12,
+            paddingBottom: 12 + insets.bottom,
+            paddingHorizontal: compact ? theme.spacing.md : theme.spacing.gutter,
+          },
+          theme.shadows.bar,
+        ]}>
+        <View
+          style={{
+            width: '100%',
+            maxWidth: theme.maxContentWidth,
+            alignSelf: 'center',
+            flexDirection: 'row',
+            // Wraps only when the text is zoomed far up on a narrow screen.
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: compact ? theme.spacing.sm : theme.spacing.md,
+          }}>
+          {left}
+          {/* A label never shrinks below its text (the row wraps instead); an element centre fills what is left. */}
+          <View style={label ? { flexGrow: 1, flexShrink: 0, flexBasis: 'auto', alignItems: 'center' } : { flexGrow: 1, flexShrink: 1, flexBasis: 0, alignItems: 'center' }}>
+            {label ? (
+              <Text weight="semibold" tabular align="center" numberOfLines={1} accessibilityLiveRegion="polite">
+                {center}
+              </Text>
+            ) : (
+              center
+            )}
+          </View>
+          {right}
         </View>
-        {right}
       </View>
-    </View>
+    </CompactBarContext.Provider>
   );
 }
 
@@ -311,7 +322,7 @@ export function Collapsible({ title, children, defaultOpen = false, open, onTogg
           justifyContent: 'space-between',
           gap: theme.spacing.md,
           minHeight: theme.minTouch,
-          marginVertical: -10,
+          marginVertical: -8,
           cursor: 'pointer',
           opacity: pressed ? 0.7 : 1,
         })}>
@@ -434,7 +445,7 @@ export function Sheet({ visible, onClose, title, children, testID }: SheetProps)
           <View
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
-            style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: theme.colors.line, marginBottom: theme.spacing.xs }}
+            style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: theme.radii.pill, backgroundColor: theme.colors.line, marginBottom: theme.spacing.xs }}
           />
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: theme.spacing.card, paddingRight: theme.spacing.md }}>
             <Text variant="heading" style={{ flex: 1 }}>

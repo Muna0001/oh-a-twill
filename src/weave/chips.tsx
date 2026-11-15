@@ -1,13 +1,14 @@
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 
 import type { PaletteColor, Run, Section } from '@/engine';
-import { Chip, Icon, Swatch, Text, Tip, useTheme } from '@/ui';
+import { Chip, Icon, Swatch, Text, Tip, radii, useTheme } from '@/ui';
 
 import { weaveCopy } from './copy';
+import { stepsSentence } from './helpers';
 
 const listStyle: ViewStyle = { flexDirection: 'row', flexWrap: 'wrap', gap: 8 };
 /** Steps and sections: radius 14 (not pills), so they read as steps. */
-const boxStyle: ViewStyle = { alignItems: 'flex-start', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, minWidth: 76 };
+const boxStyle: ViewStyle = { alignItems: 'flex-start', paddingVertical: 8, paddingHorizontal: 12, borderRadius: radii.field, borderWidth: 1, minWidth: 76 };
 
 export type StepChipsProps = {
   /** In travel order (`RowInfo.runs`). */
@@ -25,11 +26,7 @@ export type StepChipsProps = {
 /** What to do across the row, in the order you weave it. Read by screen readers as one sentence. */
 export function StepChips({ runs, row, ltr, weftColor, style, testID }: StepChipsProps) {
   const { colors } = useTheme();
-  const sentence = weaveCopy.stepsSentence(
-    row,
-    ltr,
-    runs.map((x) => weaveCopy.word(x.over, x.n).toLowerCase()),
-  );
+  const sentence = stepsSentence(runs, row, ltr);
   return (
     <View testID={testID} accessible accessibilityRole="text" accessibilityLabel={sentence} style={[listStyle, style]}>
       {runs.map((x) => {
@@ -39,7 +36,7 @@ export function StepChips({ runs, row, ltr, weftColor, style, testID }: StepChip
             key={x.from}
             testID={testID ? `${testID}-step` : undefined}
             style={[boxStyle, { backgroundColor: x.over ? colors.weft : colors.underChip, borderColor: x.over ? colors.weft : colors.line }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               {x.over && weftColor ? <Swatch color={weftColor} size={12} style={{ borderColor: colors.weftInk }} /> : null}
               <Text weight="semibold" color={ink} style={{ fontSize: 17, lineHeight: 24, letterSpacing: -0.2 }}>
                 {weaveCopy.word(x.over, x.n)}
@@ -80,7 +77,7 @@ export function SectionChips({ sections, palette, row, style, testID }: SectionC
             accessibilityLabel={`${name}, ${detail}`}
             testID={testID ? `${testID}-section` : undefined}
             style={[boxStyle, { backgroundColor: colors.surface, borderColor: colors.line }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Swatch color={color?.hex ?? 'transparent'} />
               <Text weight="semibold" style={{ fontSize: 17, lineHeight: 24, letterSpacing: -0.2 }}>
                 {name}
@@ -108,7 +105,7 @@ export type RepeatChipsProps = {
 /** The rows of the repeat as small pills: the current one marigold, the others outlined. */
 export function RepeatChips({ labels, current, style, testID }: RepeatChipsProps) {
   return (
-    <View testID={testID} accessibilityRole="list" accessibilityLabel={weaveCopy.repeatLabel} style={[{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }, style]}>
+    <View testID={testID} accessibilityRole="list" accessibilityLabel={weaveCopy.repeatLabel} style={[{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }, style]}>
       {labels.map((label, j) => (
         <Chip key={j} label={`${weaveCopy.repeatRowNumber(j + 1)} ${label}`} tone={j + 1 === current ? 'marigold' : 'outline'} />
       ))}
@@ -133,7 +130,7 @@ export function DirectionPill({ ltr, style, testID }: DirectionPillProps) {
       accessible
       accessibilityLabel={label}
       style={[
-        { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, paddingVertical: 7, paddingHorizontal: 14, borderRadius: theme.radii.pill, backgroundColor: theme.colors.overChip },
+        { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8, paddingVertical: 8, paddingHorizontal: 16, borderRadius: theme.radii.pill, backgroundColor: theme.colors.overChip },
         style,
       ]}>
       {ltr ? null : <Icon name="arrow-long-left" size={22} color="pastelInk" />}
@@ -173,8 +170,8 @@ export type WeftTagProps = {
 /** A swatch and a short label for the yarn used in this row. */
 export function WeftTag({ color, label, style, testID }: WeftTagProps) {
   return (
-    <View testID={testID} style={[{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6 }, style]}>
-      <Swatch color={color} size={18} radius={6} />
+    <View testID={testID} style={[{ flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 8 }, style]}>
+      <Swatch color={color} size={18} />
       <Text weight="semibold">{label}</Text>
     </View>
   );

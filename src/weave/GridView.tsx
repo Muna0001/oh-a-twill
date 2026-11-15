@@ -206,7 +206,7 @@ const GridBody = memo(function GridBody({ cols, rows, colorAt, cell, gap = 0, hi
         <View
           testID={testID ? `${testID}-mark` : undefined}
           pointerEvents="none"
-          style={{ position: 'absolute', left: 0, top: highlightRow * pitch, width, height: cell, borderWidth: 2, borderColor: theme.colors.papaya, borderRadius: Math.min(4, cell / 2) }}
+          style={{ position: 'absolute', left: 0, top: highlightRow * pitch, width, height: cell, borderWidth: 2, borderColor: theme.colors.papaya, borderRadius: Math.min(theme.radii.frame, cell / 2) }}
         />
       ) : null}
       {onPressRow ? (

@@ -141,7 +141,7 @@ export function GalleryScreen() {
       <Section title="Shadows">
         <Row>
           {shadowNames.map((s) => (
-            <View key={s} style={[{ width: 96, height: 64, borderRadius: theme.radii.field, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', margin: 6 }, theme.shadows[s]]}>
+            <View key={s} style={[{ width: 96, height: 64, borderRadius: theme.radii.field, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', margin: 8 }, theme.shadows[s]]}>
               <Text variant="caption">{s}</Text>
             </View>
           ))}
@@ -237,14 +237,14 @@ export function GalleryScreen() {
       <Section title="Icons">
         <Row>
           {iconNames.map((name) => (
-            <View key={name} style={{ width: 98, alignItems: 'center', gap: 4, paddingVertical: 6 }}>
+            <View key={name} style={{ width: 98, alignItems: 'center', gap: 4, paddingVertical: 8 }}>
               <Icon name={name} size={24} />
               <Text variant="hint" align="center" style={{ fontSize: 11, lineHeight: 14 }}>
                 {name}
               </Text>
             </View>
           ))}
-          <View style={{ width: 98, alignItems: 'center', gap: 4, paddingVertical: 6 }}>
+          <View style={{ width: 98, alignItems: 'center', gap: 4, paddingVertical: 8 }}>
             <Icon name="heart" size={24} filled color="weft" />
             <Text variant="hint" align="center" style={{ fontSize: 11, lineHeight: 14 }}>
               heart filled

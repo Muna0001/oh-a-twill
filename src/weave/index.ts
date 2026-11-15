@@ -35,6 +35,7 @@ export {
   mathText,
   repeatLabels,
   repeatRowLabels,
+  stepsSentence,
   warpColorsFor,
   warpNumberLabels,
   type ColorRun,

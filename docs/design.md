@@ -6,6 +6,71 @@ We take the **style**, not the brand: no product names, logos or copy from the r
 
 This is a tool used at the loom. Where the reference (a marketing site) conflicts with reading a row quickly, legibility wins: no decoration in the weaving guides, and contrast rules beat palette purity.
 
+## Token source of truth (v2.1)
+
+The owner's files are the source of truth: **`design/tokens.json`** (design tokens) and **`design/variables.css`** (the `:root` CSS variables). Do not edit values anywhere else.
+
+- `scripts/build-tokens.mjs` generates **`src/ui/tokens.ts`** from those two files, with the same names (`color.canvas`, `text.body`, `typography['2xl']`, `radius.xl`, `shadow.xl`, `spacing[24]` …).
+- `src/ui/theme.ts` builds the light theme only from `tokens.ts`; no hex, size or shadow literals.
+- A test fails if `tokens.ts` is out of date with the files.
+- The web build inlines `design/variables.css` into `index.html`, so every `--color-*`, `--text-*`, `--radius-*` and `--shadow-*` variable exists on the page.
+
+**How the app uses the tokens (light theme):**
+
+| App role | Token |
+|---|---|
+| `bg` | `color.canvas` |
+| `surface` | `color.white` |
+| `surfaceAlt` (wells, inputs, segmented track) | `color.linen` |
+| `cloud` (hover, pressed) | `color.cloud` |
+| `line` | `color.ash` |
+| `ink`, `weft`, `btn`, `pastelInk`, `warn` | `color.ink` |
+| `muted` and `graphite` (secondary text) | `color.graphite` |
+| `stone` | `color.stone`, disabled and decorative only |
+| pastels | `color.mint`, `color.marigold`, `color.periwinkle`, `color.sky` (and `--gradient-sky`) |
+| `papaya` / `mark` | `color.papaya` |
+
+**Type** (Lora stands in for `UntitledSerifFont` and Inter for `UntitledSansFont`; see Fonts):
+
+| Variant | Token | Values |
+|---|---|---|
+| `display` (Row N, Finished) | `--text-heading` | serif 46 / 1.1 / -1.38px |
+| `title` (screen titles) | `--text-heading-sm` | serif 36 / 1.2 / -0.72px |
+| `subtitle` | `typography.2xl` | serif 24 / 1.2 / -0.03em |
+| `heading` (panel headings) | `typography.lg` | sans 500, 18 / 1.4 / -0.02em |
+| `body` | `--text-body` | sans 400, 16 / 1.5 / -0.24px |
+| `label` | `typography.sm-4` | sans 500, 14 / 1.43 / 0 |
+| `hint` | `--text-body-sm` | sans 400, 14 / 1.5 / 0.14px |
+| `caption` | `--text-caption` | sans 400, 12 / 1.5 / 0.12px |
+| button labels | `typography.base-5` | sans 500, 16 / 1.5 / 0 |
+| chip labels | `typography.sm-6` | sans 500, 14 / 1.5 / 0.01em |
+
+- Convert `em` letter-spacing to px for React Native (`em × fontSize`).
+- `--text-heading-lg` (56) and `--text-display` (66) are not used: too large for a phone column.
+
+**Radius:**
+- `radius.md` 4: current-row frame, swatches
+- `radius.xl` 14: buttons, inputs, wells, step chips
+- `radius.2xl` 20: cards
+- `radius.3xl` 24: hero cards and sheets
+- `--radius-pills` 9999: pills
+- Grid cells keep 2. They are a drawing, not a UI surface.
+
+**Shadows:** expose all six by token name (`xl`, `sm`, `md`, `md-2`, `subtle`, `md-3`).
+- cards and floats → `xl`
+- hovered or pressed buttons and sheets → `md`
+- tab bar and bottom bar → `subtle`, mirrored to point up
+- segmented thumb → `subtle`
+- card hover on web → `md-3`
+
+**Spacing:** only the scale (4, 8, 12, 16, 20, 24, 32, 40, 48, 60, 80 …). Card padding is `--card-padding` 24; screen gutter 20. Off-scale values in components (6, 10, 14, 18, 28 …) snap to the nearest step, except hairlines and optical offsets of 1–2 px.
+
+**Deliberate exceptions:**
+- **Fonts:** UntitledSerif and UntitledSans are licensed commercial fonts, so Lora and Inter stand in until licensed files are provided.
+- **Stone is not used for readable text:** it is 1.8:1 on canvas, far below the 4.5:1 minimum, so secondary text uses Graphite.
+- **Azure is not used for link text:** it is 3.6:1 on white, below 4.5:1. Links stay ink and underlined.
+- **Dark theme** is derived by us, since the tokens are light only. It keeps the same token roles, and its values stay in `theme.ts`.
+
 ## Fonts
 
 | Use | Family | Package | Weights |
@@ -17,7 +82,7 @@ Familjen Grotesk is removed. Load all weights with `useFonts`, one family name p
 
 **The serif is only for headings of 24 px and up.** Never for controls, chips, labels, body or anything smaller.
 
-## Type scale (phone-first)
+## Type scale (phone-first; superseded by the token table above where they differ)
 
 | Variant | Family | Size / line height | Tracking | Used for |
 |---|---|---|---|---|
@@ -40,9 +105,9 @@ Existing token **names stay** (so screens don't churn); their values change, and
 |---|---|---|---|
 | `bg` | `#FFF3E7` Canvas | `#17130F` | Page background. Never pure white. |
 | `surface` | `#FFFFFF` | `#221D18` | Cards, sheets, bars |
-| `surfaceAlt` *(new)* | `#F7F2EC` | `#2A241E` | Inset areas: strip and grid wells, inputs |
+| `surfaceAlt` *(new)* | `#F7F7F7` Linen | `#2A241E` | Inset areas: strip and grid wells, inputs |
 | `ink` | `#030302` | `#FFF3E7` | Primary text, filled controls |
-| `muted` | `#5C5852` | `#C9BFB3` | Secondary text. Must reach 4.5:1 on both `bg` and `surface`. |
+| `muted` | `#41413F` Graphite | `#C9BFB3` | Secondary text. Must reach 4.5:1 on both `bg` and `surface`. |
 | `graphite` *(new)* | `#41413F` | `#E2D8CC` | Emphasised secondary text |
 | `stone` *(new)* | `#BEBBBA` | `#6E665E` | Disabled and decorative only, never readable text |
 | `line` | `#E1E1E1` Ash | `#3A332C` | Borders, dividers, input outlines |

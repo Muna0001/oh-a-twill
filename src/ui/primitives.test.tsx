@@ -230,7 +230,7 @@ describe('theme preference', () => {
         <Probe />
       </ThemeProvider>,
     );
-    expect(screen.getByText('light:light:#FFF3E7')).toBeTruthy();
+    expect(screen.getByText('light:light:#fff3e7')).toBeTruthy();
     await fireEvent.press(screen.getByRole('button', { name: 'Go dark' }));
     expect(screen.getByText('dark:dark:#17130F')).toBeTruthy();
   });

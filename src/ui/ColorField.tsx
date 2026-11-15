@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Button } from './Button';
@@ -49,11 +49,16 @@ export type ColorFieldProps = {
   /** Default `yarnPresets`. */
   presets?: readonly ColorPreset[];
   disabled?: boolean;
+  /**
+   * Replaces the default swatch + label button. Called with the function that opens the sheet;
+   * the element it returns owns its own press handling and accessibility label.
+   */
+  renderTrigger?: (open: () => void) => ReactNode;
   testID?: string;
 };
 
 /** A swatch + label that opens a sheet of yarn presets and a hex field. */
-export function ColorField({ label, value, onChange, presets = yarnPresets, disabled = false, testID }: ColorFieldProps) {
+export function ColorField({ label, value, onChange, presets = yarnPresets, disabled = false, renderTrigger, testID }: ColorFieldProps) {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [hex, setHex] = useState('');
@@ -80,27 +85,40 @@ export function ColorField({ label, value, onChange, presets = yarnPresets, disa
 
   return (
     <>
-      <Pressable
-        testID={testID}
-        accessibilityRole="button"
-        accessibilityLabel={uiCopy.changeColor(label, (current ?? value).toUpperCase())}
-        accessibilityState={{ disabled }}
-        disabled={disabled}
-        onPress={show}
-        style={({ pressed }) => ({
-          flexDirection: 'row',
-          alignItems: 'center',
-          alignSelf: 'flex-start',
-          gap: theme.spacing.sm,
-          minHeight: theme.minTouch,
-          cursor: disabled ? 'auto' : 'pointer',
-          opacity: disabled ? 0.4 : pressed ? 0.7 : 1,
-        })}>
-        <View style={{ padding: 3, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.line, borderRadius: theme.radii.swatch + 4 }}>
-          <Swatch color={value} size={36} radius={theme.radii.swatch} />
-        </View>
-        <Text>{label}</Text>
-      </Pressable>
+      {renderTrigger ? (
+        renderTrigger(show)
+      ) : (
+        <Pressable
+          testID={testID}
+          accessibilityRole="button"
+          accessibilityLabel={uiCopy.changeColor(label, (current ?? value).toUpperCase())}
+          accessibilityState={{ disabled }}
+          disabled={disabled}
+          onPress={show}
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            alignSelf: 'flex-start',
+            gap: theme.spacing.sm,
+            minHeight: theme.minTouch,
+            cursor: disabled ? 'auto' : 'pointer',
+            opacity: disabled ? 0.4 : pressed ? 0.7 : 1,
+          })}
+        >
+          <View
+            style={{
+              padding: 4,
+              backgroundColor: theme.colors.surface,
+              borderWidth: 1,
+              borderColor: theme.colors.line,
+              borderRadius: theme.radii.swatch + 4,
+            }}
+          >
+            <Swatch color={value} size={36} radius={theme.radii.swatch} />
+          </View>
+          <Text>{label}</Text>
+        </Pressable>
+      )}
 
       <Sheet visible={open} onClose={() => setOpen(false)} title={`${uiCopy.colorSheetTitle}: ${label}`}>
         <Text variant="label" style={{ marginBottom: theme.spacing.sm }}>
@@ -121,12 +139,13 @@ export function ColorField({ label, value, onChange, presets = yarnPresets, disa
                   width: theme.minTouch,
                   height: theme.minTouch,
                   borderRadius: theme.radii.swatch + 4,
-                  padding: 3,
+                  padding: 4,
                   borderWidth: 2,
                   borderColor: on ? theme.colors.ink : 'transparent',
                   cursor: 'pointer',
                   opacity: pressed ? 0.7 : 1,
-                })}>
+                })}
+              >
                 <View
                   style={{
                     flex: 1,
@@ -136,8 +155,16 @@ export function ColorField({ label, value, onChange, presets = yarnPresets, disa
                     borderColor: 'rgba(0,0,0,0.18)',
                     alignItems: 'center',
                     justifyContent: 'center',
-                  }}>
-                  {on ? <Icon name="check" size={18} strokeWidth={2.4} color={luminance(preset.hex) > 0.4 ? '#030302' : '#FFFFFF'} /> : null}
+                  }}
+                >
+                  {on ? (
+                    <Icon
+                      name="check"
+                      size={18}
+                      strokeWidth={2.4}
+                      color={luminance(preset.hex) > 0.4 ? '#030302' : '#FFFFFF'}
+                    />
+                  ) : null}
                 </View>
               </Pressable>
             );

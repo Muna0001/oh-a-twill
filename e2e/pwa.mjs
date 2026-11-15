@@ -107,6 +107,14 @@ async function main() {
       assert.equal(new URL(page.url()).pathname, `${BASE}/`);
     });
 
+    await step('the design variables are inlined into the page', async () => {
+      assert.equal(await page.locator('style#design-variables').count(), 1);
+      const value = (name) => page.evaluate((n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim(), name);
+      assert.equal(await value('--color-canvas'), '#fff3e7');
+      assert.equal(await value('--radius-xl'), '14px');
+      assert.match(await value('--shadow-xl'), /0px 50px 40px/);
+    });
+
     await step('the bare sub-path redirects to the app', async () => {
       await page.goto(app);
       await ready(page);
