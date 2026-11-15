@@ -176,5 +176,5 @@ Dark mode uses the same shapes with black at roughly 2–3× the opacity.
 
 ## App identity
 
-- **App icon:** the existing 2/2 twill motif, Ink blocks on a Canvas `#FFF3E7` background, with one Marigold torn-paper square behind the motif. Splash background `#FFF3E7`. Android adaptive background `#FFF3E7`.
+- **App icon:** the 2/2 twill motif, Ink `#030302` blocks on a Canvas `#FFF3E7` background, centred, inside the maskable and adaptive safe zone. No other decoration. Splash background `#FFF3E7`. Android adaptive background `#FFF3E7`.
 - **PWA:** `theme_color` and `background_color` `#FFF3E7`; dark `theme-color` meta `#17130F`.
