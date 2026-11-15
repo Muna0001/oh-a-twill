@@ -65,16 +65,16 @@ describe('ProjectSetupScreen, new project', () => {
     await render(<ProjectSetupScreen stitchId="twill22" />);
     const setup = { start: 0, mirror: false, side: 'left' as const };
     for (let k = 0; k < twill.tile.length; k++) {
-      expect(screen.getByRole('button', { name: tileRowName(twill, setup, k) })).toBeTruthy();
+      expect(screen.getByRole('radio', { name: tileRowName(twill, setup, k) })).toBeTruthy();
     }
-    expect(screen.getByRole('button', { name: 'Over 2, under 2' }).props.accessibilityState.selected).toBe(true);
+    expect(screen.getByRole('radio', { name: 'Over 2, under 2' }).props.accessibilityState.checked).toBe(true);
   });
 
   it('creates nothing until Start weaving, then creates the project with the chosen values', async () => {
     await render(<ProjectSetupScreen stitchId="twill22" />);
     await fireEvent.press(screen.getByLabelText('More warps'));
     await fireEvent.press(screen.getByLabelText('More warps'));
-    await fireEvent.press(screen.getByRole('button', { name: 'Under 2, over 2' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Under 2, over 2' }));
     await fireEvent.press(screen.getByLabelText('Mirrored'));
     await fireEvent.press(screen.getByLabelText('Right edge'));
     await fireEvent.press(screen.getByLabelText(/^Color A, /));
@@ -126,7 +126,7 @@ describe('ProjectSetupScreen, existing project', () => {
     expect(project(id)).toMatchObject({ row: 10, warps: 25, setup: { side: 'right' } });
 
     // Mirrored, tile row 1 (#..#) reads the same either way.
-    await fireEvent.press(screen.getByRole('button', { name: 'Over 1, under 2, over 1' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Over 1, under 2, over 1' }));
     expect(project(id)).toMatchObject({ row: 1, setup: { start: 1 } });
   });
 

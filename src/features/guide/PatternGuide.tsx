@@ -1,6 +1,6 @@
 import { router, useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, type ComponentRef } from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { getStitch } from '@/catalog';
 import { period, rowInfo, stats, type Stitch } from '@/engine';
@@ -59,7 +59,7 @@ export function PatternGuide({ projectId }: { projectId: string }) {
 
 function Missing({ title, message }: { title: string; message: string }) {
   return (
-    <Screen edges={['top', 'bottom']} testID="guide-missing">
+    <Screen header={<Header title="" onBack={backToProjects} />} edges={['top', 'bottom']} testID="guide-missing">
       <EmptyState
         icon="queue-list"
         title={title}
@@ -80,6 +80,7 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
   const setRow = useProjects((s) => s.setRow);
   const focused = useIsFocused();
   const cardRef = useRef<ComponentRef<typeof View>>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
 
   const info = useMemo(() => rowInfo(stitch, setup, warps, row), [stitch, setup, warps, row]);
   const mathStats = useMemo(() => stats(stitch, setup, warps), [stitch, setup, warps]);
@@ -91,13 +92,13 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
   const goNext = useCallback(() => {
     nextRow(id);
     if (haptics) tapHaptic();
-    scrollIntoView(cardRef.current);
+    scrollIntoView(cardRef.current, scrollRef.current);
   }, [nextRow, id, haptics]);
 
   const goPrev = useCallback(() => {
     if (row <= 1) return;
     prevRow(id);
-    scrollIntoView(cardRef.current);
+    scrollIntoView(cardRef.current, scrollRef.current);
   }, [prevRow, id, row]);
 
   const restart = useCallback(async () => {
@@ -121,7 +122,7 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
   const header = (
     <Header
       title={project.name}
-      subtitle={stitch.name}
+      subtitle={stitch.name === project.name ? undefined : stitch.name}
       onBack={backToProjects}
       right={
         <Button
@@ -146,7 +147,7 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
   );
 
   return (
-    <Screen scroll header={header} footer={footer} testID="pattern-guide">
+    <Screen scroll scrollRef={scrollRef} header={header} footer={footer} testID="pattern-guide">
       <View ref={cardRef} accessibilityLiveRegion="polite" testID="guide-row-card">
         <Panel variant="hero" style={{ gap: theme.spacing.md }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: theme.spacing.sm }}>
@@ -172,7 +173,7 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
             <WarpNumbers count={warps} />
           </StripScroller>
 
-          <StepChips runs={info.runs} row={row} ltr={info.ltr} weftColor={weftColor} testID="guide-steps" />
+          <StepChips runs={info.runs} row={row} ltr={info.ltr} testID="guide-steps" />
 
           {info.edgeWarp != null ? <EdgeTip warp={info.edgeWarp} testID="guide-edge-tip" /> : null}
 

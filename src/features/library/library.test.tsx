@@ -156,6 +156,15 @@ describe('legacy import offer', () => {
     expect(screen.queryByTestId('legacy-offer')).toBeNull();
   });
 
+  it('holds Quick start back until the offer is answered', async () => {
+    readLegacy.mockReturnValue(legacy);
+    await render(<LibraryScreen />);
+    expect(screen.getByTestId('legacy-offer')).toBeTruthy();
+    expect(screen.queryByTestId('quick-start-card')).toBeNull();
+    await fireEvent.press(screen.getByText('Not now'));
+    expect(screen.getByTestId('quick-start-card')).toBeTruthy();
+  });
+
   it('brings over the pattern and the picture', async () => {
     readLegacy.mockReturnValue(legacy);
     await render(<LibraryScreen />);
@@ -234,7 +243,7 @@ describe('StitchDetailScreen', () => {
   it('switches the preview between front and back', async () => {
     await render(<StitchDetailScreen id="twill21" />);
     expect(screen.getByLabelText(/front$/)).toBeTruthy();
-    await fireEvent.press(screen.getByRole('radio', { name: 'Back' }));
+    await fireEvent.press(screen.getByRole('radio', { name: 'Back of the cloth' }));
     expect(screen.getByLabelText(/, back$/)).toBeTruthy();
   });
 

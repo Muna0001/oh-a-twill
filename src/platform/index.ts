@@ -6,3 +6,6 @@ export { confirmAsync, scrollIntoView, tapHaptic, useKeepAwake, useRowKeys } fro
 export { isTypingTarget, rowKeyFor, type RowKey, type RowKeyEvent } from './keys';
 export type { ConfirmOptions, DeviceApi } from './types';
 export { readLegacy, type LegacyData } from './legacyImport';
+export { useAppUpdate } from './pwa';
+export { UpdateNotice } from './UpdateNotice';
+export { updateNoticeDue, type AppUpdate } from './appUpdate';

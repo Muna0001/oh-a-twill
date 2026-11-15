@@ -14,8 +14,8 @@ import { DifficultyDots } from './parts';
 type Face = 'front' | 'back';
 
 const FACES = [
-  { value: 'front', label: copy.front },
-  { value: 'back', label: copy.back },
+  { value: 'front', label: copy.front, accessibilityLabel: copy.frontA11y },
+  { value: 'back', label: copy.back, accessibilityLabel: copy.backA11y },
 ] as const;
 
 const MIN_WARPS = 4;

@@ -2,7 +2,7 @@
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useEffect } from 'react';
-import { Alert } from 'react-native';
+import { AccessibilityInfo, Alert } from 'react-native';
 
 import type { DeviceApi } from './types';
 
@@ -60,4 +60,39 @@ export const confirmAsync: DeviceApi['confirmAsync'] = ({ title, message, confir
     }
   });
 
-export const scrollIntoView: DeviceApi['scrollIntoView'] = () => {};
+/** Space left above the target when it is scrolled to. */
+const SCROLL_MARGIN = 16;
+
+let reduceMotion = false;
+try {
+  quietly(AccessibilityInfo.isReduceMotionEnabled()?.then((on) => (reduceMotion = on)));
+  AccessibilityInfo.addEventListener?.('reduceMotionChanged', (on) => (reduceMotion = on));
+} catch {
+  // No accessibility info (tests): animate.
+}
+
+type ScrollViewLike = { scrollTo?: (options: { y: number; animated: boolean }) => void; getInnerViewRef?: () => unknown };
+type MeasurableLike = { measureLayout?: (relativeTo: unknown, onSuccess: (x: number, y: number) => void, onFail?: () => void) => void };
+
+/** Scrolls `scrollView` so the top of `target` (a view inside it) sits just under its top edge. */
+export const scrollIntoView: DeviceApi['scrollIntoView'] = (target, scrollView) => {
+  try {
+    const sv = scrollView as ScrollViewLike | null | undefined;
+    const el = target as MeasurableLike | null | undefined;
+    if (!sv || typeof sv.scrollTo !== 'function' || !el || typeof el.measureLayout !== 'function') return;
+    const relativeTo = sv.getInnerViewRef?.() ?? sv;
+    el.measureLayout(
+      relativeTo,
+      (_x, y) => {
+        try {
+          sv.scrollTo?.({ y: Math.max(0, y - SCROLL_MARGIN), animated: !reduceMotion });
+        } catch {
+          // Unmounted between measuring and scrolling.
+        }
+      },
+      () => {},
+    );
+  } catch {
+    // Not measurable: nothing to scroll.
+  }
+};

@@ -222,6 +222,7 @@ function SetupForm({ title, stitch, values, onChange, name, onName, onNameCommit
               {Array.from({ length: tileRows }, (_, k) => (
                 <Button
                   key={k}
+                  accessibilityRole="radio"
                   label={tileRowName(stitch, setup, k)}
                   selected={k === setup.start}
                   onPress={() => {

@@ -24,8 +24,12 @@ const FILTERS: { id: Filter; label: string }[] = [
 const GAP = 12;
 const MAX_CARD = 200;
 
-/** How many columns fit: at least 2, and cards no wider than about 200. */
+/** Below this content width (a phone with the page zoomed far up) the cards stack in one column. */
+const ONE_COLUMN_BELOW = 260;
+
+/** How many columns fit: 2 or more on a phone, and cards no wider than about 200. */
 function columnsFor(contentWidth: number): number {
+  if (contentWidth < ONE_COLUMN_BELOW) return 1;
   return Math.max(2, Math.ceil((contentWidth + GAP) / (MAX_CARD + GAP)));
 }
 
@@ -36,6 +40,9 @@ export function LibraryScreen() {
   const [filter, setFilter] = useState<Filter>('all');
   const favourites = useSettings((s) => s.favourites);
   const colors = useSettings((s) => s.defaultColors);
+  const [legacy] = useState(readLegacy);
+  const legacyHandled = useSettings((s) => s.legacyImportHandled);
+  const offerLegacy = !!legacy && !legacyHandled;
 
   const stitches = useMemo(
     () =>
@@ -63,14 +70,15 @@ export function LibraryScreen() {
         {copy.title}
       </Text>
 
-      <LegacyOffer />
-      <TopCard />
+      {legacy && offerLegacy ? <LegacyOffer legacy={legacy} /> : null}
+      <TopCard quickStart={!offerLegacy} />
 
       <SearchField value={query} onChangeText={setQuery} placeholder={copy.searchPlaceholder} accessibilityLabel={copy.searchLabel} testID="library-search" />
 
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        accessibilityRole="radiogroup"
         accessibilityLabel={copy.categoriesLabel}
         style={{ marginTop: theme.spacing.md, marginHorizontal: -theme.spacing.lg, flexGrow: 0 }}
         contentContainerStyle={{ gap: theme.spacing.sm, paddingHorizontal: theme.spacing.lg }}>
@@ -79,6 +87,7 @@ export function LibraryScreen() {
             key={f.id}
             label={f.label}
             tone="outline"
+            accessibilityRole="radio"
             selected={filter === f.id}
             icon={f.id === 'favorites' ? 'heart' : undefined}
             onPress={() => setFilter(f.id)}
@@ -123,13 +132,16 @@ export function LibraryScreen() {
   );
 }
 
-/** Continue (the last opened project), Quick start (no projects yet), or nothing. */
-function TopCard() {
+/**
+ * Continue (the last opened project), Quick start (no projects yet), or nothing. Quick start
+ * waits while the old helper's weaving is on offer, so first launch asks one thing at a time.
+ */
+function TopCard({ quickStart }: { quickStart: boolean }) {
   const lastOpenedId = useProjects((s) => s.lastOpenedId);
   const hasProjects = useProjects((s) => s.order.length > 0);
   const last = useProject(lastOpenedId);
   if (last) return <ContinueCard project={last} />;
-  if (!hasProjects) return <QuickStartCard />;
+  if (!hasProjects && quickStart) return <QuickStartCard />;
   return null;
 }
 
@@ -139,13 +151,13 @@ function ContinueCard({ project }: { project: Project }) {
   const meta = project.kind === 'pattern' ? copy.rowAndWarps(project.row, project.warps) : copy.pictureRowAndWarps(project.row, project.warps);
   return (
     <Panel testID="continue-card" variant="hero">
-      <View style={{ flexDirection: 'row', gap: theme.spacing.md, alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.md, alignItems: 'center' }}>
         {stitch && project.kind === 'pattern' ? (
           <View style={{ width: 84 }}>
             <TilePreview stitch={stitch} colors={project.colors} cols={12} rows={10} mirror={project.setup.mirror} />
           </View>
         ) : null}
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 120, gap: 2 }}>
           <Text variant="label">{copy.continueLabel}</Text>
           <Text variant="heading" numberOfLines={2}>
             {project.name}
@@ -188,13 +200,13 @@ function QuickStartCard() {
   };
   return (
     <Panel testID="quick-start-card" variant="hero">
-      <View style={{ flexDirection: 'row', gap: theme.spacing.md, alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.md, alignItems: 'center' }}>
         {twill ? (
           <View style={{ width: 84 }}>
             <TilePreview stitch={twill} colors={colors} cols={12} rows={10} />
           </View>
         ) : null}
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 120, gap: 2 }}>
           <Text variant="label">{copy.quickStartLabel}</Text>
           <Text variant="heading">{copy.quickStartLine(warps)}</Text>
           <Text variant="hint">{copy.quickStartHint}</Text>
@@ -239,12 +251,9 @@ async function importLegacy(data: LegacyData): Promise<void> {
   open(openId);
 }
 
-function LegacyOffer() {
+function LegacyOffer({ legacy }: { legacy: LegacyData }) {
   const theme = useTheme();
-  const handled = useSettings((s) => s.legacyImportHandled);
-  const [legacy] = useState(readLegacy);
   const [busy, setBusy] = useState(false);
-  if (!legacy || handled) return null;
 
   const accept = async () => {
     if (busy) return;

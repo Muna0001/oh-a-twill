@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ComponentRef, ReactNode, Ref } from 'react';
 import { Pressable, type StyleProp, type ViewStyle } from 'react-native';
 
 import { Icon, type IconName } from './Icon';
@@ -20,6 +20,11 @@ export type ButtonProps = {
   disabled?: boolean;
   /** Toggle state: draws the filled style and reports `selected` to screen readers. */
   selected?: boolean;
+  /**
+   * Default 'button'. 'radio' is for one choice out of several inside an
+   * `accessibilityRole="radiogroup"` view: `selected` is then reported as `checked`.
+   */
+  accessibilityRole?: 'button' | 'radio';
   /** 'lg' is the taller bottom-bar size (48 pt). Default 'md' (44 pt). */
   size?: 'md' | 'lg';
   /** Stretch to the container width. */
@@ -30,6 +35,8 @@ export type ButtonProps = {
   style?: StyleProp<ViewStyle>;
   testID?: string;
   children?: ReactNode;
+  /** The pressable's host view, e.g. to move keyboard focus to it. */
+  ref?: Ref<ComponentRef<typeof Pressable>>;
 };
 
 type WebPressState = { pressed: boolean; hovered?: boolean };
@@ -46,9 +53,11 @@ export function Button({
   fullWidth = false,
   accessibilityLabel,
   accessibilityHint,
+  accessibilityRole = 'button',
   style,
   testID,
   children,
+  ref,
 }: ButtonProps) {
   const theme = useTheme();
   const { colors } = theme;
@@ -60,10 +69,14 @@ export function Button({
 
   return (
     <Pressable
-      accessibilityRole="button"
+      ref={ref}
+      accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ disabled, ...(selected === undefined ? null : { selected }) }}
+      accessibilityState={{ disabled, ...(selected === undefined ? null : accessibilityRole === 'radio' ? { checked: selected } : { selected }) }}
+      // react-native-web reads the aria-* props, not accessibilityState.
+      aria-checked={accessibilityRole === 'radio' ? selected : undefined}
+      aria-selected={accessibilityRole === 'radio' ? undefined : selected}
       disabled={disabled}
       onPress={onPress}
       testID={testID}
@@ -81,6 +94,7 @@ export function Button({
             cursor: disabled ? 'auto' : 'pointer',
             opacity: disabled ? 0.4 : pressed ? 0.7 : 1,
             alignSelf: fullWidth ? 'stretch' : 'flex-start',
+            maxWidth: '100%',
           },
           isLink
             ? { paddingHorizontal: 8, borderRadius: theme.radii.field }
@@ -96,7 +110,8 @@ export function Button({
       }}>
       {icon ? <Icon name={icon} color={ink} /> : null}
       {label ? (
-        <Text color={ink} weight={filled || isLink ? 'semibold' : 'medium'} numberOfLines={1}>
+        // Wraps (rather than cutting the label short) only when the text is zoomed far up.
+        <Text color={ink} weight={filled || isLink ? 'semibold' : 'medium'} align="center" style={{ flexShrink: 1 }}>
           {label}
         </Text>
       ) : null}

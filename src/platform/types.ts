@@ -20,8 +20,10 @@ export interface DeviceApi {
   /** Ask a yes/no question. Resolves true when the person confirms. */
   confirmAsync: (options: ConfirmOptions) => Promise<boolean>;
   /**
-   * Scroll the page so the element behind `ref.current` is in view (web). On phones the
-   * scroll view is owned by `Screen` and is not reachable from here, so this does nothing.
+   * Bring `target` (a view's `ref.current`) into view. On the web the browser scrolls the
+   * nearest scrolling ancestor. On phones pass the `ScrollView` that holds it (`Screen`'s
+   * `scrollRef`); without one this does nothing. Instant when the person prefers reduced
+   * motion. Never throws.
    */
-  scrollIntoView: (target: unknown) => void;
+  scrollIntoView: (target: unknown, scrollView?: unknown) => void;
 }

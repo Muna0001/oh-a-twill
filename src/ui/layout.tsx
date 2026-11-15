@@ -1,5 +1,6 @@
-import { useContext, useState, type ReactNode } from 'react';
+import { useContext, useEffect, useRef, useState, type ComponentRef, type ReactNode, type Ref } from 'react';
 import {
+  AccessibilityInfo,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -25,12 +26,38 @@ export function useInsets() {
   return useContext(SafeAreaInsetsContext) ?? zeroInsets;
 }
 
+/** True when the person asked the system (or browser) for less motion. */
+export function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    let live = true;
+    let sub: { remove: () => void } | undefined;
+    try {
+      AccessibilityInfo.isReduceMotionEnabled?.()
+        ?.then((on) => {
+          if (live) setReduced(on);
+        })
+        .catch(() => {});
+      sub = AccessibilityInfo.addEventListener?.('reduceMotionChanged', (on) => setReduced(on));
+    } catch {
+      // No accessibility info: keep the default motion.
+    }
+    return () => {
+      live = false;
+      sub?.remove?.();
+    };
+  }, []);
+  return reduced;
+}
+
 export type ScreenEdge = 'top' | 'bottom';
 
 export type ScreenProps = {
   children?: ReactNode;
   /** Wrap the content in a vertical ScrollView. Default false. */
   scroll?: boolean;
+  /** Ref to that ScrollView (with `scroll`), e.g. to bring a card back into view on phones. */
+  scrollRef?: Ref<ComponentRef<typeof ScrollView>>;
   /** Rendered above the content and does not scroll (usually a `Header`). */
   header?: ReactNode;
   /** Rendered below the content and does not scroll (usually a `BottomBar`, which pads its own bottom inset). */
@@ -50,7 +77,7 @@ export type ScreenProps = {
 
 const defaultEdges: ScreenEdge[] = ['top'];
 
-export function Screen({ children, scroll = false, header, footer, edges = defaultEdges, padded = true, contentStyle, testID }: ScreenProps) {
+export function Screen({ children, scroll = false, scrollRef, header, footer, edges = defaultEdges, padded = true, contentStyle, testID }: ScreenProps) {
   const theme = useTheme();
   const insets = useInsets();
   const bottomInset = edges.includes('bottom') && !footer ? insets.bottom : 0;
@@ -71,6 +98,7 @@ export function Screen({ children, scroll = false, header, footer, edges = defau
       {header ? <View style={column}>{header}</View> : null}
       {scroll ? (
         <ScrollView
+          ref={scrollRef}
           style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: bottomInset + theme.spacing.xl }}>
@@ -132,6 +160,9 @@ export type HeaderProps = {
   testID?: string;
 };
 
+/** Width the title keeps before `right` wraps to its own line. */
+const HEADER_TITLE_BASIS = 100;
+
 export function Header({ title, subtitle, back, onBack, backLabel = uiCopy.back, right, testID }: HeaderProps) {
   const theme = useTheme();
   const showBack = back ?? !!onBack;
@@ -141,7 +172,8 @@ export function Header({ title, subtitle, back, onBack, backLabel = uiCopy.back,
   };
   return (
     <View testID={testID} style={{ marginBottom: theme.spacing.lg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm, minHeight: theme.minTouch }}>
+      {/* Wraps only when the text is zoomed far up on a narrow screen: then `right` drops below. */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: theme.spacing.sm, minHeight: theme.minTouch }}>
         {showBack ? (
           <Pressable
             accessibilityRole="button"
@@ -161,9 +193,14 @@ export function Header({ title, subtitle, back, onBack, backLabel = uiCopy.back,
             <Icon name="chevron-left" size={24} />
           </Pressable>
         ) : null}
-        <Text variant="title" style={{ flex: 1 }}>
-          {title}
-        </Text>
+        {title ? (
+          <Text variant="title" style={{ flexGrow: 1, flexShrink: 1, flexBasis: HEADER_TITLE_BASIS }}>
+            {title}
+          </Text>
+        ) : (
+          // No empty heading for screen readers on a back-only header.
+          <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0 }} />
+        )}
         {right}
       </View>
       {subtitle ? (
@@ -206,11 +243,14 @@ export function BottomBar({ left, center, right, testID }: BottomBarProps) {
           maxWidth: theme.maxContentWidth,
           alignSelf: 'center',
           flexDirection: 'row',
+          // Wraps only when the text is zoomed far up on a narrow screen.
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
           alignItems: 'center',
           gap: theme.spacing.md,
         }}>
         {left}
-        <View style={{ flex: 1, alignItems: 'center' }}>
+        <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, alignItems: 'center' }}>
           {typeof center === 'string' || typeof center === 'number' ? (
             <Text weight="semibold" tabular align="center" accessibilityLiveRegion="polite">
               {center}
@@ -251,6 +291,7 @@ export function Collapsible({ title, children, defaultOpen = false, open, onTogg
         accessibilityRole="button"
         accessibilityLabel={title}
         accessibilityState={{ expanded: isOpen }}
+        aria-expanded={isOpen}
         onPress={toggle}
         style={({ pressed }) => ({
           flexDirection: 'row',
@@ -310,12 +351,29 @@ export type SheetProps = {
   testID?: string;
 };
 
-/** Modal sheet that rises from the bottom edge. */
+/**
+ * Modal sheet that rises from the bottom edge. Escape (web) and the system back gesture close it.
+ * Keyboard focus moves to its close button when it opens; it fades in unless reduced motion is on.
+ */
 export function Sheet({ visible, onClose, title, children, testID }: SheetProps) {
   const theme = useTheme();
   const insets = useInsets();
+  const reduceMotion = useReducedMotion();
+  const closeRef = useRef<ComponentRef<typeof Pressable>>(null);
+  useEffect(() => {
+    if (!visible) return;
+    // After the modal has mounted. Views on phones have no focus(); screen readers move there themselves.
+    const timer = setTimeout(() => {
+      try {
+        (closeRef.current as { focus?: () => void } | null)?.focus?.();
+      } catch {
+        // Not focusable here.
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [visible]);
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={visible} transparent animationType={reduceMotion ? 'none' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'flex-end' }}>
         <Pressable
           accessibilityRole="button"
@@ -344,7 +402,7 @@ export function Sheet({ visible, onClose, title, children, testID }: SheetProps)
             <Text variant="heading" style={{ flex: 1 }}>
               {title}
             </Text>
-            <Button variant="link" icon="x-mark" accessibilityLabel={uiCopy.close} onPress={onClose} />
+            <Button ref={closeRef} variant="link" icon="x-mark" accessibilityLabel={uiCopy.close} onPress={onClose} />
           </View>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.sm }}>
             {children}

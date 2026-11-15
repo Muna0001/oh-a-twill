@@ -36,7 +36,7 @@ export function SettingsScreen() {
   const set = s.set;
 
   return (
-    <Screen scroll header={<Header title={copy.settings.title} />}>
+    <Screen scroll header={<Header title={copy.settings.title} />} testID="settings-screen">
       <Panel style={{ gap: theme.spacing.xl }}>
         <Text variant="heading">{copy.settings.newProjects}</Text>
         <Field label={copy.settings.defaultWarps}>

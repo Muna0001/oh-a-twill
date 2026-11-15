@@ -104,10 +104,19 @@ export const confirmAsync: DeviceApi['confirmAsync'] = async ({ title, message }
   }
 };
 
+function prefersReducedMotion(): boolean {
+  try {
+    return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
+
+/** The browser finds the scrolling ancestor itself, so `scrollView` is not needed here. */
 export const scrollIntoView: DeviceApi['scrollIntoView'] = (target) => {
   try {
     const el = target as { scrollIntoView?: (options?: ScrollIntoViewOptions) => void } | null;
-    el?.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    el?.scrollIntoView?.({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   } catch {
     // Not an element: nothing to scroll.
   }
