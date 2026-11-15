@@ -4,7 +4,7 @@ import { Pressable, TextInput, View, type StyleProp, type TextStyle, type ViewSt
 import { uiCopy } from './copy';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
-import { useTheme, type PastelToken } from './theme';
+import { radii, useTheme, type PastelToken } from './theme';
 
 /** On web the browser's own focus outline is drawn by the field's ring instead. */
 const bareInput = { outlineWidth: 0 } as TextStyle;
@@ -76,7 +76,7 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
         flexDirection: 'row',
         alignSelf: fullWidth ? 'stretch' : 'flex-start',
         maxWidth: '100%',
-        padding: 3,
+        padding: 4,
         gap: 2,
         backgroundColor: theme.colors.surfaceAlt,
         borderRadius: theme.radii.pill,
@@ -95,7 +95,7 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
             onPress={() => {
               if (!on) onChange(option.value);
             }}
-            hitSlop={{ top: 3, bottom: 3 }}
+            hitSlop={{ top: 4, bottom: 4 }}
             style={(state) => {
               const { pressed, hovered } = state as { pressed: boolean; hovered?: boolean };
               return [
@@ -332,26 +332,25 @@ export function Chip({ label, tone = 'neutral', selected = false, onPress, icon,
             ? colors.surface
             : colors.surfaceAlt;
   const ink = selected ? colors.btnInk : pastel ? colors.pastelInk : tone === 'weft' ? colors.weftInk : tone === 'neutral' ? colors.graphite : colors.ink;
-  const strong = selected || pastel || tone === 'weft';
   const base: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
     // Never wider than its row: with the text zoomed far up the label wraps instead.
     maxWidth: '100%',
-    gap: 6,
+    gap: 8,
     borderRadius: theme.radii.pill,
     backgroundColor: bg,
     borderWidth: 1,
     borderColor: tone === 'outline' && !selected ? colors.line : bg,
-    paddingHorizontal: big ? 16 : 11,
-    paddingVertical: big ? 8 : 3,
+    paddingHorizontal: big ? 16 : 12,
+    paddingVertical: big ? 8 : 4,
     minHeight: big ? (onPress ? theme.minTouch : 36) : undefined,
   };
   const content = (
     <>
       {icon ? <Icon name={icon} color={ink} size={big ? 20 : 16} /> : null}
-      <Text variant={big ? 'body' : 'hint'} color={ink} weight={strong ? 'semibold' : 'medium'} style={{ flexShrink: 1 }}>
+      <Text variant="chip" color={ink} style={{ flexShrink: 1 }}>
         {label}
       </Text>
     </>
@@ -456,18 +455,18 @@ export function Tip({ children, icon = 'exclamation-triangle', style, testID }: 
         {
           flexDirection: 'row',
           alignItems: 'flex-start',
-          gap: 10,
+          gap: 12,
           backgroundColor: theme.colors.warnBg,
           borderRadius: theme.radii.field,
           paddingVertical: 12,
-          paddingHorizontal: 14,
+          paddingHorizontal: 16,
         },
         style,
       ]}>
       <View style={{ marginTop: 2 }}>
         <Icon name={icon} color="warn" />
       </View>
-      <Text color="warn" style={{ flex: 1, fontSize: 15, lineHeight: 22, letterSpacing: -0.15 }}>
+      <Text color="warn" style={{ flex: 1 }}>
         {children}
       </Text>
     </View>
@@ -479,7 +478,7 @@ export type SwatchProps = {
   color: string;
   /** Default 16. */
   size?: number;
-  /** Corner radius. Default 6 (half of `size` when smaller). */
+  /** Corner radius. Default `radius.md` (4). */
   radius?: number;
   /** Set to have screen readers announce the swatch. */
   accessibilityLabel?: string;
@@ -498,7 +497,7 @@ export function Swatch({ color, size = 16, radius, accessibilityLabel, style, te
         {
           width: size,
           height: size,
-          borderRadius: radius ?? Math.min(6, size / 2),
+          borderRadius: radius ?? radii.swatch,
           backgroundColor: color,
           borderWidth: 1,
           borderColor: 'rgba(0,0,0,0.18)',
@@ -530,7 +529,7 @@ export function SearchField({ value, onChangeText, placeholder, accessibilityLab
           flexDirection: 'row',
           alignItems: 'center',
           minHeight: theme.minTouch + 4,
-          paddingLeft: 14,
+          paddingLeft: 16,
           gap: theme.spacing.sm,
           backgroundColor: theme.colors.surfaceAlt,
           borderWidth: 1,
@@ -649,7 +648,8 @@ export function TextField({
           {
             minWidth: 0,
             height: theme.minTouch + 2,
-            paddingHorizontal: invalid ? 13 : 14,
+            // A 2 px error border: 1 px less padding keeps the text still.
+            paddingHorizontal: invalid ? 15 : 16,
             paddingVertical: 0,
             fontSize: 16,
             color: theme.colors.ink,

@@ -6,6 +6,8 @@
 //   - manifest.webmanifest, and the matching <link>/<meta> tags in index.html
 //   - 404.html (a copy of index.html: GitHub Pages serves it for deep links, the router reads the URL)
 //   - sw.js (public/sw.js with this build's precache list and version filled in)
+//   - design/variables.css inlined into <head> as <style id="design-variables">, so every design
+//     variable (--color-*, --text-*, --radius-*, --shadow-* …) exists on the page
 // --skip-export only post-processes an existing export (handy when iterating on this script).
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -189,8 +191,9 @@ function escapeAttr(s) {
   return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
-function patchHtml(html, { base, name, light }) {
+function patchHtml(html, { base, name, light, variables }) {
   if (html.includes('rel="manifest"')) return html; // already patched (--skip-export rerun)
+  if (variables.includes('</style')) throw new Error('design/variables.css must not contain "</style"');
   let out = html.replace(/<meta name="viewport"[^>]*>/, '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />');
   // Drop any theme-color Expo added from app.json; we add light and dark versions below.
   out = out.replace(/<meta name="theme-color"[^>]*>\s*/g, '');
@@ -203,6 +206,7 @@ function patchHtml(html, { base, name, light }) {
     `<meta name="mobile-web-app-capable" content="yes">`,
     `<meta name="apple-mobile-web-app-status-bar-style" content="default">`,
     `<meta name="apple-mobile-web-app-title" content="${escapeAttr(name)}">`,
+    `<style id="design-variables">\n${variables.trim()}\n</style>`,
   ].join('\n');
   if (!out.includes('</head>')) throw new Error('index.html has no </head>');
   return out.replace('</head>', `${head}\n</head>`);
@@ -264,6 +268,7 @@ async function main() {
     base: opts.base,
     name: man.short_name,
     light: man.theme_color,
+    variables: await readFile(join(root, 'design/variables.css'), 'utf8'),
   });
   await writeFile(join(outDir, 'index.html'), html);
   await writeFile(join(outDir, '404.html'), html);

@@ -36,7 +36,7 @@ export function RepeatList({ stitch, setup, colors, style, testID }: RepeatListP
   // Wide tiles have no short name ("Row 3" says nothing new), so only the strip is shown.
   const named = stitch.tile[0].length <= 6;
   return (
-    <View testID={testID} accessibilityRole="list" accessibilityLabel={weaveCopy.repeatLabel} style={[{ gap: 10 }, style]}>
+    <View testID={testID} accessibilityRole="list" accessibilityLabel={weaveCopy.repeatLabel} style={[{ gap: 12 }, style]}>
       {rows.map((r) => (
         <View key={r.n} accessible accessibilityLabel={named ? `${r.n}. ${r.label}` : r.label} style={{ gap: 4 }}>
           {named ? (

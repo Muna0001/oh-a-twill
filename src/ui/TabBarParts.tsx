@@ -31,7 +31,7 @@ export function TabBarItem({ icon, label, isFocused, href: _href, ref, style: _s
         justifyContent: 'center',
         gap: 2,
         minHeight: 52,
-        paddingVertical: 6,
+        paddingVertical: 8,
         borderRadius: theme.radii.button,
         cursor: 'pointer',
         opacity: pressed ? 0.7 : 1,

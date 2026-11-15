@@ -56,7 +56,7 @@ export function StripScroller({ count, cellMin = 10, children, well = true, styl
       <View onLayout={onLayout} style={{ alignSelf: 'stretch' }}>
         <StripContext.Provider value={cell}>
           {scrolls ? (
-            <ScrollView horizontal testID={testID} contentContainerStyle={{ paddingHorizontal: EDGE_PAD, paddingBottom: 6 }}>
+            <ScrollView horizontal testID={testID} contentContainerStyle={{ paddingHorizontal: EDGE_PAD, paddingBottom: 8 }}>
               <View style={{ width: count * cell }}>{children}</View>
             </ScrollView>
           ) : (

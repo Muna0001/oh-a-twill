@@ -119,7 +119,7 @@ function PatternDemo({ name, stitch, warps, startRow = 2, full = true }: { name:
         <Text variant="rowNumber">Row {row}</Text>
         <DirectionPill ltr={info.ltr} />
       </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
         {st.period > 1 ? (
           <Text color="muted">
             Row {info.repeatRow} of the {st.period}-row repeat.

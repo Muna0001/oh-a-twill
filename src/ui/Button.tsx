@@ -96,7 +96,7 @@ export function Button({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 6,
+            gap: 8,
             minHeight,
             minWidth: theme.minTouch,
             borderRadius: isPrimary ? theme.radii.pill : theme.radii.button,
@@ -109,7 +109,7 @@ export function Button({
             ? { paddingHorizontal: 8, backgroundColor: active ? colors.cloud : 'transparent' }
             : {
                 paddingVertical: 8,
-                paddingHorizontal: iconOnly ? 8 : compact ? 12 : isPrimary ? (size === 'lg' ? 24 : 20) : 14,
+                paddingHorizontal: iconOnly ? 8 : compact ? 12 : isPrimary ? (size === 'lg' ? 24 : 20) : 16,
                 borderWidth: 1,
                 backgroundColor: filled ? colors.btn : active ? colors.cloud : colors.surface,
                 borderColor: filled ? colors.btn : colors.line,
@@ -123,7 +123,7 @@ export function Button({
       {icon ? <Icon name={icon} color={ink} /> : null}
       {label ? (
         // Wraps (rather than cutting the label short) only when the text is zoomed far up.
-        <Text color={ink} weight={filled || isLink ? 'semibold' : 'medium'} align="center" style={[{ flexShrink: 1 }, isLink ? { textDecorationLine: 'underline' } : null]}>
+        <Text variant="button" color={ink} align="center" style={[{ flexShrink: 1 }, isLink ? { textDecorationLine: 'underline' } : null]}>
           {label}
         </Text>
       ) : null}

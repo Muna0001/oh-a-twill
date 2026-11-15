@@ -16,7 +16,7 @@ const PAD = 3;
  * Inside padding of the `surfaceAlt` well: roomy above and below; at the sides the label column
  * and PAD give the inset, so 24 warps still fit a 390 pt phone without scrolling.
  */
-const WELL_PAD = { paddingVertical: 9, paddingHorizontal: 2 } as const;
+const WELL_PAD = { paddingVertical: 8, paddingHorizontal: 2 } as const;
 
 export type DrawdownProps = {
   stitch: Structure;
@@ -74,7 +74,7 @@ export function Drawdown({ stitch, setup, warps, colors, currentRow, onJump, win
                     align="right"
                     color={current ? 'ink' : 'muted'}
                     weight={current ? 'semibold' : 'regular'}
-                    style={{ position: 'absolute', top: y * pitch, right: 6, left: 0, height: cell, fontSize: labelSize, lineHeight: cell }}>
+                    style={{ position: 'absolute', top: y * pitch, right: 4, left: 0, height: cell, fontSize: labelSize, lineHeight: cell }}>
                     {r}
                   </Text>
                 );
@@ -85,7 +85,7 @@ export function Drawdown({ stitch, setup, warps, colors, currentRow, onJump, win
               <View
                 testID={testID ? `${testID}-current` : undefined}
                 pointerEvents="none"
-                style={{ position: 'absolute', left: -2, right: -2, top: yCurrent * pitch - 2, height: cell + 4, borderWidth: 2, borderColor: theme.colors.papaya, borderRadius: 4 }}
+                style={{ position: 'absolute', left: -2, right: -2, top: yCurrent * pitch - 2, height: cell + 4, borderWidth: 2, borderColor: theme.colors.papaya, borderRadius: theme.radii.frame }}
               />
             ) : null}
             <RowPressOverlay testID={testID} rows={windowSize} pitch={pitch} onPressRow={pressRow} currentRow={yCurrent} rowLabel={rowLabel} accessibilityLabel={weaveCopy.drawdownLabel} />

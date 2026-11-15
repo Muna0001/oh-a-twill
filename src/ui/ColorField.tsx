@@ -107,7 +107,7 @@ export function ColorField({ label, value, onChange, presets = yarnPresets, disa
         >
           <View
             style={{
-              padding: 3,
+              padding: 4,
               backgroundColor: theme.colors.surface,
               borderWidth: 1,
               borderColor: theme.colors.line,
@@ -139,7 +139,7 @@ export function ColorField({ label, value, onChange, presets = yarnPresets, disa
                   width: theme.minTouch,
                   height: theme.minTouch,
                   borderRadius: theme.radii.swatch + 4,
-                  padding: 3,
+                  padding: 4,
                   borderWidth: 2,
                   borderColor: on ? theme.colors.ink : 'transparent',
                   cursor: 'pointer',

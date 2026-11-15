@@ -3,6 +3,7 @@ import { View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path, Rect } from 'react-native-svg';
 
 import { back, cellKey, type PatternSetup, type Structure } from '@/engine';
+import { radii } from '@/ui';
 
 import { mergeRuns } from './helpers';
 
@@ -54,7 +55,7 @@ export const TilePreview = memo(function TilePreview({ stitch, colors, cols = 12
       accessibilityLabel={accessibilityLabel}
       accessibilityElementsHidden={!accessibilityLabel}
       importantForAccessibility={accessibilityLabel ? 'yes' : 'no-hide-descendants'}
-      style={[{ width: '100%', aspectRatio: cols / rows, borderRadius: 4, overflow: 'hidden' }, style]}>
+      style={[{ width: '100%', aspectRatio: cols / rows, borderRadius: radii.frame, overflow: 'hidden' }, style]}>
       <Svg width="100%" height="100%" viewBox={`0 0 ${cols * S} ${rows * S}`} preserveAspectRatio="none">
         {rects.map((r) => (
           <Rect key={r.key} x={r.x} y={r.y} width={r.w} height={S} fill={r.fill} />

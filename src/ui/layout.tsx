@@ -192,7 +192,7 @@ export function Header({ title, titleVariant = 'title', subtitle, back, onBack, 
             style={({ pressed }) => ({
               width: theme.minTouch,
               height: theme.minTouch,
-              marginLeft: -10,
+              marginLeft: -8,
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: theme.radii.pill,
@@ -322,7 +322,7 @@ export function Collapsible({ title, children, defaultOpen = false, open, onTogg
           justifyContent: 'space-between',
           gap: theme.spacing.md,
           minHeight: theme.minTouch,
-          marginVertical: -10,
+          marginVertical: -8,
           cursor: 'pointer',
           opacity: pressed ? 0.7 : 1,
         })}>
@@ -445,7 +445,7 @@ export function Sheet({ visible, onClose, title, children, testID }: SheetProps)
           <View
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
-            style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: theme.colors.line, marginBottom: theme.spacing.xs }}
+            style={{ alignSelf: 'center', width: 40, height: 4, borderRadius: theme.radii.pill, backgroundColor: theme.colors.line, marginBottom: theme.spacing.xs }}
           />
           <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: theme.spacing.card, paddingRight: theme.spacing.md }}>
             <Text variant="heading" style={{ flex: 1 }}>
