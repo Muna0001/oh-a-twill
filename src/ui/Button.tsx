@@ -1,6 +1,7 @@
-import type { ComponentRef, ReactNode, Ref } from 'react';
+import { useContext, type ComponentRef, type ReactNode, type Ref } from 'react';
 import { Pressable, type StyleProp, type ViewStyle } from 'react-native';
 
+import { CompactBarContext } from './barContext';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 import { useTheme } from './theme';
@@ -18,7 +19,7 @@ export type ButtonProps = {
   variant?: ButtonVariant;
   /** Icon before the label. */
   icon?: IconName;
-  /** Icon after the label. */
+  /** Icon after the label. Left out of an `lg` button in a BottomBar under 360 pt wide (it is decoration). */
   trailingIcon?: IconName;
   disabled?: boolean;
   /** Toggle state: draws the filled style and reports `selected` to screen readers. */
@@ -70,6 +71,9 @@ export function Button({
   const ink = filled ? colors.btnInk : colors.ink;
   const minHeight = size === 'lg' ? 52 : isPrimary ? 48 : theme.minTouch;
   const iconOnly = !label && !children;
+  // In a narrow bottom bar, `lg` buttons give up padding and the trailing chevron so the row label fits.
+  const compact = useContext(CompactBarContext) && size === 'lg';
+  const showTrailing = !!trailingIcon && !(compact && !iconOnly);
 
   return (
     <Pressable
@@ -105,7 +109,7 @@ export function Button({
             ? { paddingHorizontal: 8, backgroundColor: active ? colors.cloud : 'transparent' }
             : {
                 paddingVertical: 8,
-                paddingHorizontal: iconOnly ? 8 : isPrimary ? (size === 'lg' ? 24 : 20) : 14,
+                paddingHorizontal: iconOnly ? 8 : compact ? 12 : isPrimary ? (size === 'lg' ? 24 : 20) : 14,
                 borderWidth: 1,
                 backgroundColor: filled ? colors.btn : active ? colors.cloud : colors.surface,
                 borderColor: filled ? colors.btn : colors.line,
@@ -124,7 +128,7 @@ export function Button({
         </Text>
       ) : null}
       {children}
-      {trailingIcon ? <Icon name={trailingIcon} color={ink} /> : null}
+      {showTrailing && trailingIcon ? <Icon name={trailingIcon} color={ink} /> : null}
     </Pressable>
   );
 }
