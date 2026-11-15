@@ -1,7 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import { Alert } from 'react-native';
+import { Alert, Dimensions } from 'react-native';
 
 import { rowInfo } from '@/engine';
+import { stepsSentence } from '@/weave';
 import { getStitch } from '@/catalog';
 import { resetStoresForTests, useProjects, useSettings } from '@/store';
 
@@ -78,12 +79,37 @@ describe('PatternGuide', () => {
     const id = create('twill22', { warps: 24, side: 'left', row: 2 });
     await render(<PatternGuide projectId={id} />);
     expect(screen.getByTestId('guide-direction')).toHaveTextContent('Right to left');
-    const chips = screen.getAllByTestId('guide-steps-step');
-    expect(chips[0]).toHaveTextContent(/^Over 1/);
-    expect(chips[0]).toHaveTextContent(/warp 24$/);
+    expect(screen.queryByTestId('guide-steps-step')).toBeNull();
+    expect(screen.getByTestId('guide-start', hidden)).toHaveTextContent('Start: over 1 at warp 24');
     expect(screen.getByTestId('guide-repeat-line')).toHaveTextContent('Row 2 of the 4-row repeat.');
     expect(screen.getByTestId('guide-weft')).toHaveTextContent('Weft: Color A');
+    expect(screen.getByLabelText('Weft color: Color A. Change')).toBeTruthy();
     expect(screen.getByTestId('guide-repeat')).toBeTruthy();
+  });
+
+  it('gives screen readers the whole row as one sentence', async () => {
+    const id = create('twill22', { row: 2 });
+    await render(<PatternGuide projectId={id} />);
+    const info = rowInfo(getStitch('twill22')!, { start: 0, mirror: false, side: 'left' }, 24, 2);
+    const sentence = stepsSentence(info.runs, 2, info.ltr);
+    expect(sentence).toMatch(/^Row 2, right to left: over 1, under 2, over 2, /);
+    expect(screen.getByTestId('guide-steps').props.accessibilityLabel).toBe(sentence);
+  });
+
+  it('changes the yarn of this row’s weft (Color B on houndstooth row 5) without moving the row', async () => {
+    const stitch = getStitch('hounds')!;
+    expect(rowInfo(stitch, { start: 0, mirror: false, side: 'left' }, 24, 5).weftKey).toBe(1);
+    const id = create('hounds', { row: 5 });
+    const before = useProjects.getState().projects[id]!;
+    if (before.kind !== 'pattern') throw new Error('expected a pattern project');
+    await render(<PatternGuide projectId={id} />);
+    expect(screen.getByTestId('guide-weft')).toHaveTextContent('Weft: Color B');
+    await fireEvent.press(screen.getByLabelText('Weft color: Color B. Change'));
+    await fireEvent.press(screen.getByLabelText('Rust'));
+    const after = useProjects.getState().projects[id]!;
+    if (after.kind !== 'pattern') throw new Error('expected a pattern project');
+    expect(after.colors).toEqual([before.colors[0], '#c4622d']);
+    expect(after.row).toBe(5);
   });
 
   it('shows the edge tip where the engine says so, and not for 2/2 twill at 24 warps', async () => {
@@ -176,13 +202,26 @@ describe('PatternGuide', () => {
   it('opens the setup sheet from the header and goes back to the projects list', async () => {
     const id = create();
     await render(<PatternGuide projectId={id} />);
-    expect(screen.getByText('24 warps')).toBeTruthy();
-    await fireEvent.press(screen.getByTestId('guide-setup'));
+    expect(screen.getByTestId('guide-setup')).toHaveTextContent('Project settings');
+    await fireEvent.press(screen.getByLabelText('Project settings'));
     expect(mockRouter.push).toHaveBeenCalledWith(`/project/${id}/setup`);
 
     mockRouter.canGoBack.mockReturnValueOnce(false);
     await fireEvent.press(screen.getByLabelText('Back'));
     expect(mockRouter.replace).toHaveBeenCalledWith('/projects');
+  });
+
+  it('shows only the settings icon on a very narrow screen', async () => {
+    const original = Dimensions.get('window');
+    Dimensions.set({ window: { ...original, width: 320 } });
+    try {
+      const id = create();
+      await render(<PatternGuide projectId={id} />);
+      expect(screen.getByTestId('guide-setup')).not.toHaveTextContent('Project settings');
+      expect(screen.getByLabelText('Project settings')).toBeTruthy();
+    } finally {
+      Dimensions.set({ window: original });
+    }
   });
 
   it('goes back to row 1 after the start row is changed in setup', async () => {

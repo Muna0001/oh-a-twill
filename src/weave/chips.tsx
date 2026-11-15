@@ -4,6 +4,7 @@ import type { PaletteColor, Run, Section } from '@/engine';
 import { Chip, Icon, Swatch, Text, Tip, useTheme } from '@/ui';
 
 import { weaveCopy } from './copy';
+import { stepsSentence } from './helpers';
 
 const listStyle: ViewStyle = { flexDirection: 'row', flexWrap: 'wrap', gap: 8 };
 /** Steps and sections: radius 14 (not pills), so they read as steps. */
@@ -25,11 +26,7 @@ export type StepChipsProps = {
 /** What to do across the row, in the order you weave it. Read by screen readers as one sentence. */
 export function StepChips({ runs, row, ltr, weftColor, style, testID }: StepChipsProps) {
   const { colors } = useTheme();
-  const sentence = weaveCopy.stepsSentence(
-    row,
-    ltr,
-    runs.map((x) => weaveCopy.word(x.over, x.n).toLowerCase()),
-  );
+  const sentence = stepsSentence(runs, row, ltr);
   return (
     <View testID={testID} accessible accessibilityRole="text" accessibilityLabel={sentence} style={[listStyle, style]}>
       {runs.map((x) => {

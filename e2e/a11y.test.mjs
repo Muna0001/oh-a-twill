@@ -101,9 +101,9 @@ for (const { name, browser } of list) {
       await waitForRow(page, 2);
       await settle(page);
       await page.locator('body').click({ position: { x: 1, y: 1 } });
-      const seen = await tabThrough(page, 7);
+      const seen = await tabThrough(page, 8);
       const names = seen.map((s) => s.name);
-      const order = ['Back', 'Project settings, 24 warps', 'Back to row 1', 'Drawdown', 'The math', 'Previous row', 'Row done'];
+      const order = ['Back', 'Project settings', 'Weft color: Color A. Change', 'Back to row 1', 'Drawdown', 'The math', 'Previous row', 'Row done'];
       assert.deepEqual(names, order);
       for (const s of seen) assert.ok(s.ring, `focus ring on ${s.name}`);
       // Enter on the focused Row done advances.

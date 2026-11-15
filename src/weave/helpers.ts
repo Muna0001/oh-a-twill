@@ -1,5 +1,5 @@
 /** Pure helpers behind the weave components. No React here, so they are cheap to test. */
-import { mod, period, tileRowName, warpKey, weftKey, type PatternSetup, type PatternStats, type Structure } from '@/engine';
+import { mod, period, tileRowName, warpKey, weftKey, type PatternSetup, type PatternStats, type Run, type Structure } from '@/engine';
 
 import { weaveCopy } from './copy';
 
@@ -24,6 +24,15 @@ export function mergeRuns(cols: number, colorAtRow: (x: number) => string): Colo
     }
   }
   return out;
+}
+
+/** The steps of a row as one sentence for screen readers: "Row 2, right to left: over 1, under 2, …". */
+export function stepsSentence(runs: readonly Run[], row: number, ltr: boolean): string {
+  return weaveCopy.stepsSentence(
+    row,
+    ltr,
+    runs.map((x) => weaveCopy.word(x.over, x.n).toLowerCase()),
+  );
 }
 
 /** The yarn colour of every warp, left to right. */

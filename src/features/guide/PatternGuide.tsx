@@ -1,29 +1,32 @@
 import { router, useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, type ComponentRef } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { getStitch } from '@/catalog';
 import { period, rowInfo, stats, type Stitch } from '@/engine';
 import { confirmAsync, scrollIntoView, tapHaptic, useKeepAwake, useRowKeys } from '@/platform';
 import { useHydrated, useProject, useProjects, useSettings, type PatternProject } from '@/store';
-import { BottomBar, Button, Collapsible, EmptyState, Header, Panel, Screen, Text, useTheme } from '@/ui';
+import { BottomBar, Button, Collapsible, ColorField, EmptyState, Header, Icon, Panel, Screen, Text, useTheme } from '@/ui';
 import {
   DirectionPill,
   Drawdown,
   EdgeTip,
   MathPanel,
   RepeatChips,
-  StepChips,
   StripScroller,
   WarpNumbers,
   WarpStrip,
   WeftTag,
   repeatLabels,
+  stepsSentence,
   warpColorsFor,
   weaveCopy,
 } from '@/weave';
 
 import { guideCopy as copy } from './copy';
+
+/** Narrower than this, the header's settings button shows only its icon. */
+const COMPACT_HEADER_BELOW = 360;
 
 /** Above this row, "Back to row 1" asks first. */
 const CONFIRM_RESTART_ABOVE = 10;
@@ -78,6 +81,8 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
   const nextRow = useProjects((s) => s.nextRow);
   const prevRow = useProjects((s) => s.prevRow);
   const setRow = useProjects((s) => s.setRow);
+  const updatePattern = useProjects((s) => s.updatePattern);
+  const { width } = useWindowDimensions();
   const focused = useIsFocused();
   const cardRef = useRef<ComponentRef<typeof View>>(null);
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
@@ -88,6 +93,16 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
   const warpColors = useMemo(() => warpColorsFor(stitch, warps, colors), [stitch, warps, colors]);
   const P = period(stitch);
   const weftColor = colors[info.weftKey];
+  const weftName = weaveCopy.colorName(info.weftKey);
+  const first = info.runs[0];
+
+  const setWeftColor = useCallback(
+    (hex: string) => {
+      const next: [string, string] = info.weftKey === 0 ? [hex, colors[1]] : [colors[0], hex];
+      updatePattern(id, { colors: next });
+    },
+    [info.weftKey, colors, updatePattern, id],
+  );
 
   const goNext = useCallback(() => {
     nextRow(id);
@@ -122,13 +137,14 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
   const header = (
     <Header
       title={project.name}
+      titleVariant="subtitle"
       subtitle={stitch.name === project.name ? undefined : stitch.name}
       onBack={backToProjects}
       right={
         <Button
           icon="cog-6-tooth"
-          label={copy.warps(warps)}
-          accessibilityLabel={copy.setupLabel(warps)}
+          label={width < COMPACT_HEADER_BELOW ? undefined : copy.setup}
+          accessibilityLabel={copy.setup}
           accessibilityHint={copy.setupHint}
           onPress={() => router.push(`/project/${id}/setup`)}
           testID="guide-setup"
@@ -163,17 +179,49 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
                 {copy.repeatLine(info.repeatRow, P)}
               </Text>
             ) : null}
-            <WeftTag color={weftColor} label={weaveCopy.weft(weaveCopy.colorName(info.weftKey))} testID="guide-weft" />
+            <ColorField
+              label={weftName}
+              value={weftColor}
+              onChange={setWeftColor}
+              renderTrigger={(openSheet) => (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={copy.weftButton(weftName)}
+                  onPress={openSheet}
+                  testID="guide-weft"
+                  style={({ pressed }) => ({
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: theme.spacing.xs,
+                    minHeight: theme.minTouch,
+                    paddingRight: theme.spacing.xs,
+                    borderRadius: theme.radii.button,
+                    backgroundColor: pressed ? theme.colors.cloud : 'transparent',
+                    cursor: 'pointer',
+                  })}>
+                  <WeftTag color={weftColor} label={weaveCopy.weft(weftName)} style={{ alignSelf: 'center' }} />
+                  <Icon name="chevron-down" size={16} color="muted" />
+                </Pressable>
+              )}
+            />
           </View>
 
           {labels ? <RepeatChips labels={labels} current={info.repeatRow} testID="guide-repeat" /> : null}
 
-          <StripScroller count={warps} testID="guide-strip">
-            <WarpStrip states={info.states} warpColors={warpColors} weftColor={weftColor} />
-            <WarpNumbers count={warps} />
-          </StripScroller>
-
-          <StepChips runs={info.runs} row={row} ltr={info.ltr} testID="guide-steps" />
+          <View style={{ gap: theme.spacing.sm }}>
+            {/* The strip is a picture; screen readers hear the whole row as one sentence instead. */}
+            <View accessible accessibilityRole="text" accessibilityLabel={stepsSentence(info.runs, row, info.ltr)} testID="guide-steps">
+              <StripScroller count={warps} testID="guide-strip">
+                <WarpStrip states={info.states} warpColors={warpColors} weftColor={weftColor} />
+                <WarpNumbers count={warps} />
+              </StripScroller>
+            </View>
+            {first ? (
+              <Text variant="hint" tabular accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="guide-start">
+                {copy.start(weaveCopy.word(first.over, first.n).toLowerCase(), first.from)}
+              </Text>
+            ) : null}
+          </View>
 
           {info.edgeWarp != null ? <EdgeTip warp={info.edgeWarp} testID="guide-edge-tip" /> : null}
 

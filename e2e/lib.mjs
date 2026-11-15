@@ -81,14 +81,17 @@ export async function rowLabel(page) {
   return (await visibleTestId(page, 'guide-row').innerText()).trim();
 }
 
-/** Step chips of the current pattern row as ["Over 2 · warps 1–2", …]. */
-export async function stepTexts(page) {
-  return visibleTestId(page, 'guide-steps').locator('[data-testid="guide-steps-step"]').evaluateAll((els) =>
-    els.map((el) => {
-      const parts = [...el.querySelectorAll('div')].filter((d) => d.children.length === 0).map((d) => d.textContent.trim()).filter(Boolean);
-      return parts.join(' · ');
-    }),
-  );
+/**
+ * The current pattern row as screen readers hear it: "Row 2, right to left: over 1, under 2, …"
+ * (the strip's accessibility label; the guide has no step chips).
+ */
+export async function stepSentence(page) {
+  return (await visibleTestId(page, 'guide-steps').getAttribute('aria-label')).trim();
+}
+
+/** The hint under the strip, e.g. "Start: over 1 at warp 24". */
+export async function startHint(page) {
+  return (await visibleTestId(page, 'guide-start').innerText()).trim();
 }
 
 /** No page-level horizontal overflow, and no vertical scroll view wider than its box. */
