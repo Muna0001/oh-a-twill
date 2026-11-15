@@ -7,7 +7,7 @@ import type { StitchCategory } from '@/engine';
 import { importPictureDataUrl } from '@/media';
 import { readLegacy, type LegacyData } from '@/platform/legacyImport';
 import { useProject, useProjects, useSettings, type Project } from '@/store';
-import { Button, Chip, EmptyState, Panel, PaperShape, Screen, SearchField, Text, useTheme, type PaperColor } from '@/ui';
+import { Button, Chip, EmptyState, Panel, Screen, SearchField, Text, useTheme } from '@/ui';
 import { TilePreview } from '@/weave';
 
 import { libraryCopy as copy } from './copy';
@@ -69,13 +69,9 @@ export function LibraryScreen() {
       ? { title: copy.noFavoritesTitle, message: copy.noFavoritesMessage }
       : { title: copy.noMatchTitle, message: searching ? copy.noMatchMessage(query.trim()) : copy.noMatchInCategory };
 
-  // At most two paper shapes on screen: the title's, and the top card's or the empty state's.
-  const emptyPaper: PaperColor | undefined = top.kind === 'none' ? (filter === 'favorites' && !searching ? 'mint' : 'periwinkle') : undefined;
-
   return (
     <Screen scroll>
       <View style={{ marginBottom: theme.spacing.xl, minHeight: theme.minTouch, justifyContent: 'center' }}>
-        <PaperShape color="sky" seed={7} width={132} height={64} rotate={4} style={{ top: -6, right: -8 }} />
         <Text variant="title" accessibilityRole="header">
           {copy.title}
         </Text>
@@ -113,7 +109,6 @@ export function LibraryScreen() {
           icon={filter === 'favorites' && !searching ? 'heart' : 'magnifying-glass'}
           title={empty.title}
           message={empty.message}
-          paper={emptyPaper}
           action={
             filter !== 'all' || searching ? (
               <Button
@@ -159,16 +154,12 @@ function useTopCard(quickStart: boolean): TopCardKind {
   return { kind: 'none' };
 }
 
-/** The hero card surface with a torn-paper shape peeking out behind its bottom-left corner. */
-function HeroCard({ testID, paper, seed, children }: { testID: string; paper: PaperColor; seed: number; children: ReactNode }) {
-  const theme = useTheme();
+/** The hero card (radius 24, floated) for Quick start and Continue. */
+function HeroCard({ testID, children }: { testID: string; children: ReactNode }) {
   return (
-    <View style={{ marginBottom: theme.spacing.cardGap }}>
-      <PaperShape color={paper} seed={seed} width={112} height={84} rotate={-6} dots style={{ bottom: -14, left: -10 }} />
-      <Panel testID={testID} variant="hero" style={{ marginBottom: 0 }}>
-        {children}
-      </Panel>
-    </View>
+    <Panel testID={testID} variant="hero">
+      {children}
+    </Panel>
   );
 }
 
@@ -177,7 +168,7 @@ function ContinueCard({ project }: { project: Project }) {
   const stitch = project.kind === 'pattern' ? getStitch(project.stitchId) : undefined;
   const meta = project.kind === 'pattern' ? copy.rowAndWarps(project.row, project.warps) : copy.pictureRowAndWarps(project.row, project.warps);
   return (
-    <HeroCard testID="continue-card" paper="marigold" seed={11}>
+    <HeroCard testID="continue-card">
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.lg, alignItems: 'center' }}>
         {stitch && project.kind === 'pattern' ? (
           <View style={{ width: 84 }}>
@@ -226,7 +217,7 @@ function QuickStartCard() {
     router.push(`/project/${id}`);
   };
   return (
-    <HeroCard testID="quick-start-card" paper="mint" seed={5}>
+    <HeroCard testID="quick-start-card">
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.lg, alignItems: 'center' }}>
         {twill ? (
           <View style={{ width: 84 }}>

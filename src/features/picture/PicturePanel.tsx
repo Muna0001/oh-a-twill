@@ -4,7 +4,7 @@ import { ActivityIndicator, Image, Platform, View } from 'react-native';
 import { LIMITS, type PicWeave } from '@/engine';
 import { thumbnailSource, type BuiltPicture } from '@/media';
 import type { PictureProject } from '@/store';
-import { Button, Checkbox, Icon, PaperShape, Segmented, Stepper, Swatch, Text, Tip, useTheme, type SegmentedOption } from '@/ui';
+import { Button, Checkbox, Icon, Segmented, Stepper, Swatch, Text, Tip, useTheme, type SegmentedOption } from '@/ui';
 
 import { pictureCopy as copy } from './copy';
 import { useFileDrop } from './useFileDrop';
@@ -108,11 +108,7 @@ export function PicturePanel({ project, pic, building, error, picking, onPick, o
             paddingVertical: theme.spacing.xl,
             paddingHorizontal: theme.spacing.lg,
           }}>
-          {/* "No picture yet": the empty state's paper, behind the icon. Never in the row card or preview. */}
-          <View style={{ width: 96, height: 72, alignItems: 'center', justifyContent: 'center' }}>
-            <PaperShape color="sky" seed={6} width={88} height={64} rotate={-5} dots style={{ top: 4, left: 4 }} />
-            <Icon name="arrow-up-tray" size={32} color="pastelInk" strokeWidth={1.5} />
-          </View>
+          <Icon name="arrow-up-tray" size={32} color="muted" strokeWidth={1.5} />
           <Text weight="semibold" align="center">
             {copy.addTitle}
           </Text>

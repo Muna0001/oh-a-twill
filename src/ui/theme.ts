@@ -150,7 +150,7 @@ export const darkColors: ThemeColors = {
   btnInk: '#17130F',
 };
 
-/** `sky` fill of PaperShape only (`--gradient-sky`), top to bottom. Drawn in sRGB: SVG cannot interpolate `in oklab`. */
+/** The `--gradient-sky` token, top to bottom (no screen uses it now). Drawn in sRGB: SVG cannot interpolate `in oklab`. */
 export const skyGradient = gradient.sky.stops;
 
 /**

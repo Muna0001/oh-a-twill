@@ -83,5 +83,4 @@ export {
   type EmptyStateProps,
   type SheetProps,
 } from './layout';
-export { PaperShape, paperPath, type PaperShapeProps, type PaperColor } from './PaperShape';
 export * as tokens from './tokens';

@@ -1,6 +1,6 @@
-# Oh a Twill — visual design (v2, "paper scrapbook")
+# Oh a Twill — visual design (v2)
 
-Source of truth for the look of the app. It adapts a scrapbook-style reference the owner chose: warm paper canvas, soft pastels, torn-paper collage accents, a literary serif for big headlines and a clean sans for everything else, soft rounded cards floated on layered shadows.
+Source of truth for the look of the app. It adapts a reference the owner chose: warm paper canvas, soft pastels, a literary serif for big headlines and a clean sans for everything else, soft rounded cards floated on layered shadows.
 
 We take the **style**, not the brand: no product names, logos or copy from the reference, and its commercial fonts are replaced by free equivalents.
 
@@ -173,22 +173,6 @@ Dark mode uses the same shapes with black at roughly 2–3× the opacity.
 - **Strips and grids** sit in a `surfaceAlt` well with radius 14.
 - **Drawdown and picture preview:** the current row is framed in `papaya` (2 px, radius 4). Done rows dim to 55 % as today.
 - **"Finished"** uses a `mint` pill with a check.
-
-## Collage accents (`PaperShape`)
-
-- A decorative component in `src/ui`: an SVG shape with a **torn-paper edge**. The edge is a deterministic jagged path from a seed, so it is stable across renders and in screenshots.
-- Props: pastel fill (`mint` | `marigold` | `periwinkle` | `sky`); an optional dot-grid texture (`line`-coloured dots at 8 px); rotation of a few degrees; size; the `float` shadow.
-- Always absolutely positioned behind content, `pointerEvents="none"`, hidden from accessibility, and clipped so it never causes horizontal scroll.
-- `sky` is the gradient `#9ED4EF → #D1EEF9`, used only inside PaperShape.
-
-**Where:**
-- behind the Stitches title (top right)
-- behind the Quick start and Continue card (offset corner)
-- in empty states (Projects, no favorites, no picture yet)
-- behind the setup screen's stitch summary
-- one small one on Settings' About panel
-
-**Never** in the pattern guide, the picture guide's row card or preview, or anywhere near the bottom bar. At most two shapes visible per screen.
 
 ## App identity
 

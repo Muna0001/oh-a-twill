@@ -3,7 +3,7 @@ import { View } from 'react-native';
 
 import type { Side } from '@/engine';
 import { useSettings, type Settings } from '@/store';
-import { Checkbox, ColorField, Header, Panel, PaperShape, Screen, Segmented, Stepper, Text, useTheme } from '@/ui';
+import { Checkbox, ColorField, Header, Panel, Screen, Segmented, Stepper, Text, useTheme } from '@/ui';
 
 import { copy } from './copy';
 import { Field } from './parts';
@@ -84,20 +84,17 @@ export function SettingsScreen() {
         />
       </Panel>
 
-      <View style={{ marginBottom: theme.spacing.cardGap }}>
-        <PaperShape color="mint" seed={2} width={72} height={56} rotate={8} dots style={{ top: -10, right: -8 }} />
-        <Panel style={{ gap: theme.spacing.sm, marginBottom: 0 }}>
-          <Text variant="heading">{copy.settings.about}</Text>
-          <View>
-            <Text weight="semibold">{copy.settings.appName}</Text>
-            <Text variant="hint" tabular>
-              {copy.settings.version(appVersion())}
-            </Text>
-          </View>
-          <Text>{copy.settings.privacy}</Text>
-          <Text variant="hint">{copy.settings.saved}</Text>
-        </Panel>
-      </View>
+      <Panel style={{ gap: theme.spacing.sm }}>
+        <Text variant="heading">{copy.settings.about}</Text>
+        <View>
+          <Text weight="semibold">{copy.settings.appName}</Text>
+          <Text variant="hint" tabular>
+            {copy.settings.version(appVersion())}
+          </Text>
+        </View>
+        <Text>{copy.settings.privacy}</Text>
+        <Text variant="hint">{copy.settings.saved}</Text>
+      </Panel>
     </Screen>
   );
 }

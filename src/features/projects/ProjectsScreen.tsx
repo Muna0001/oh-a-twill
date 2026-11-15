@@ -38,7 +38,7 @@ export function ProjectsScreen() {
       </View>
 
       {projects.length === 0 ? (
-        <EmptyState icon="queue-list" paper="marigold" paperSeed={4} title={copy.projects.emptyTitle} message={copy.projects.emptyMessage} />
+        <EmptyState icon="queue-list" title={copy.projects.emptyTitle} message={copy.projects.emptyMessage} />
       ) : (
         // One floated card holds the whole list; rows are split by hairlines.
         <View testID="project-list" style={[theme.cards.card, { paddingVertical: theme.spacing.xs }]}>

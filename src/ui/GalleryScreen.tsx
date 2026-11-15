@@ -6,7 +6,6 @@ import { ColorField } from './ColorField';
 import { Checkbox, Chip, SearchField, Segmented, Stepper, Swatch, TextField, Tip, type ChipTone } from './controls';
 import { Icon, iconNames } from './Icon';
 import { BottomBar, Collapsible, EmptyState, Header, Panel, Screen, Sheet } from './layout';
-import { PaperShape } from './PaperShape';
 import { Text } from './Text';
 import { useTheme, useThemePreference, type ColorToken, type ShadowName, type ThemePreference } from './theme';
 
@@ -80,15 +79,6 @@ export function GalleryScreen() {
           ))}
         </Row>
       </Section>
-
-      <View style={{ minHeight: 132, justifyContent: 'center', marginBottom: theme.spacing.cardGap }}>
-        <PaperShape color="marigold" seed={4} width={150} height={110} rotate={-6} dots style={{ top: 4, right: -8 }} />
-        <PaperShape color="sky" seed={9} width={96} height={84} rotate={5} style={{ top: 36, right: 120 }} />
-        <Text variant="title">Paper shapes</Text>
-        <Text variant="hint" style={{ maxWidth: 200 }}>
-          Torn-paper accents sit behind titles and cards.
-        </Text>
-      </View>
 
       <Section title="Text">
         <Text variant="display">Display 46</Text>
@@ -231,7 +221,7 @@ export function GalleryScreen() {
       </Panel>
 
       <Panel>
-        <EmptyState icon="queue-list" paper="mint" title="No projects yet" message="Pick a stitch or start from a picture." action={<Button label="New from picture" icon="photo" variant="primary" />} />
+        <EmptyState icon="queue-list" title="No projects yet" message="Pick a stitch or start from a picture." action={<Button label="New from picture" icon="photo" variant="primary" />} />
       </Panel>
 
       <Section title="Icons">
