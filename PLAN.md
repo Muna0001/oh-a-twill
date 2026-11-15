@@ -278,7 +278,7 @@ interface Settings { defaultWarps: number; defaultSide: Side; defaultColors: [st
                      haptics: boolean; keepAwake: boolean; theme: 'system' | 'light' | 'dark'; favourites: string[] }
 ```
 
-Limits: warps 4–120, picture colours 2–8, picture rows 4–400. Defaults: 24 warps, `twill22`, start 0, not mirrored, left edge, colours `#2E4C8F` / `#E4DCC8`, k 4, tidy on, weave `twill22`.
+Limits: warps 4–120, picture colours 2–8, picture rows 4–400. Defaults: 24 warps, `twill22`, start 0, not mirrored, left edge, colours `#9BD8A9` (mint, Color A) / `#41413F` (graphite, Color B); before settings v2 they were `#2E4C8F` / `#E4DCC8`, k 4, tidy on, weave `twill22`.
 
 ---
 

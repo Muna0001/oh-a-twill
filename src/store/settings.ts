@@ -4,11 +4,12 @@ import { persist } from 'zustand/middleware';
 import { DEFAULTS } from '@/engine/types';
 
 import { setStoreHydrated } from './hydration';
+import { LEGACY_DEFAULT_COLORS } from './legacy';
 import { jsonStorage, SETTINGS_KEY } from './storage';
 import type { Settings } from './types';
 import { cleanBool, cleanColors, cleanSide, cleanStringList, clampWarps, isRecord } from './validate';
 
-export const SETTINGS_VERSION = 1;
+export const SETTINGS_VERSION = 2;
 
 export const DEFAULT_SETTINGS: Settings = {
   defaultWarps: DEFAULTS.warps,
@@ -56,12 +57,24 @@ export function sanitizeSettings(raw: unknown, base: SettingsData): SettingsData
 /**
  * Reshape older saved settings into the current shape. Validation happens in `merge`.
  * v0 (pre-release builds) spelled `favourites` as `favorites`.
+ * v1 → v2: the default yarn colours changed; a stored pair that is exactly the old default
+ * (any letter case) becomes the new default. Any other choice is the person's and stays.
  */
 export function migrateSettings(persisted: unknown, version: number): SettingsData {
   const state: Record<string, unknown> = isRecord(persisted) ? { ...persisted } : {};
   if (version < 1) {
     if (!('favourites' in state) && 'favorites' in state) state.favourites = state.favorites;
     delete state.favorites;
+  }
+  if (version < 2) {
+    const c = state.defaultColors;
+    if (
+      Array.isArray(c) &&
+      c.length === 2 &&
+      c.every((v, i) => typeof v === 'string' && v.toUpperCase() === LEGACY_DEFAULT_COLORS[i])
+    ) {
+      state.defaultColors = [DEFAULTS.colors[0], DEFAULTS.colors[1]];
+    }
   }
   return state as unknown as SettingsData;
 }

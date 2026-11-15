@@ -27,9 +27,10 @@ registerHooks({
 const load = (file) => import(pathToFileURL(path.join(root, file)).href);
 const { STITCHES, CATEGORIES } = await load('src/catalog/index.ts');
 const { back, cellKey } = await load('src/engine/pattern/pattern.ts');
+const { DEFAULTS } = await load('src/engine/types.ts');
 
 // Project defaults: Color A (weft), Color B (warp).
-const COLORS = ['#2E4C8F', '#E4DCC8'];
+const COLORS = DEFAULTS.colors;
 const SETUP = { start: 0, mirror: false, side: 'left' };
 const WARPS = 24;
 const ROWS = 16;

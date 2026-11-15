@@ -344,7 +344,10 @@ export type ThemeCards = {
   card: ViewStyle;
   /** Hero look: as `card` with radius `3xl`. */
   hero: ViewStyle;
-  /** Inset well for strips and grids: `surfaceAlt` (linen), radius `xl`. No padding. */
+  /**
+   * Inset well for strips and grids, radius `xl`. No padding. Light: `surfaceAlt` (linen).
+   * Dark: `bg`, a step darker than the card, so a graphite (default Color B) warp still shows.
+   */
   well: ViewStyle;
 };
 
@@ -353,7 +356,7 @@ function makeCards(colors: ThemeColors, shadows: ThemeShadows, dark: boolean): T
   return {
     card: { backgroundColor: colors.surface, borderRadius: radii.panel, ...border, ...shadows.xl },
     hero: { backgroundColor: colors.surface, borderRadius: radii.hero, ...border, ...shadows.xl },
-    well: { backgroundColor: colors.surfaceAlt, borderRadius: radii.field },
+    well: { backgroundColor: dark ? colors.bg : colors.surfaceAlt, borderRadius: radii.field },
   };
 }
 

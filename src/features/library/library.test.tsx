@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 
+import { DEFAULTS } from '@/engine';
 import type { LegacyData } from '@/platform/legacyImport';
 import { resetStoresForTests, useProjects, useSettings } from '@/store';
 
@@ -101,7 +102,7 @@ describe('LibraryScreen', () => {
     const { projects, lastOpenedId, order } = useProjects.getState();
     expect(order).toHaveLength(1);
     const p = projects[order[0]];
-    expect(p).toMatchObject({ kind: 'pattern', stitchId: 'twill22', name: '2/2 twill', warps: 24, row: 1, colors: ['#2E4C8F', '#E4DCC8'] });
+    expect(p).toMatchObject({ kind: 'pattern', stitchId: 'twill22', name: '2/2 twill', warps: 24, row: 1, colors: [...DEFAULTS.colors] });
     expect(lastOpenedId).toBe(p.id);
     expect(router.push).toHaveBeenCalledWith(`/project/${p.id}`);
   });

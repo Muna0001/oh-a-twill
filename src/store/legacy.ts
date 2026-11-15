@@ -10,6 +10,9 @@ import { clampK, clampRow, clampRows, clampWarps, cleanColors, cleanSetup, clean
 
 export const LEGACY_KEY = 'weaving-helper-v3';
 
+/** The old web app's default yarn colours (indigo on natural), also this app's defaults before settings v2. */
+export const LEGACY_DEFAULT_COLORS = ['#2E4C8F', '#E4DCC8'] as const;
+
 /** Every pattern id the old web app could have saved. */
 export const LEGACY_STITCH_IDS = [
   'plain',
@@ -69,7 +72,7 @@ export function normalizeLegacy(raw: unknown): LegacyData | null {
     pattern: {
       stitchId,
       setup: cleanSetup({ start: raw.start, mirror: raw.mirror, side: raw.side }),
-      colors: cleanColors(raw.colors),
+      colors: cleanColors(raw.colors, LEGACY_DEFAULT_COLORS),
       row: clampRow(raw.row),
     },
     picture,

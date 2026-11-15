@@ -128,7 +128,8 @@ export const DEFAULTS = {
   warps: 24,
   stitchId: 'twill22',
   setup: { start: 0, mirror: false, side: 'left' } as PatternSetup,
-  colors: ['#2E4C8F', '#E4DCC8'] as [string, string],
+  /** Color A (weft) = mint (token color.mint), Color B (warp) = graphite (token color.graphite). */
+  colors: ['#9BD8A9', '#41413F'] as [string, string],
   k: 4,
   tidy: true,
   weave: 'twill22' as PicWeave,

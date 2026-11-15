@@ -1,12 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { act, renderHook } from '@testing-library/react-native';
 
+import { DEFAULTS } from '@/engine/types';
+
 import {
   DEFAULT_SETTINGS,
   isHydrated,
   rehydrateStores,
   resetStoresForTests,
   SETTINGS_KEY,
+  SETTINGS_VERSION,
   useHydrated,
   useSettings,
 } from './index';
@@ -30,7 +33,7 @@ describe('useSettings', () => {
     expect(S()).toMatchObject({
       defaultWarps: 24,
       defaultSide: 'left',
-      defaultColors: ['#2E4C8F', '#E4DCC8'],
+      defaultColors: [...DEFAULTS.colors],
       haptics: true,
       keepAwake: true,
       theme: 'system',
@@ -69,7 +72,7 @@ describe('useSettings', () => {
       defaultWarps: 120,
       theme: 'system',
       defaultSide: 'left',
-      defaultColors: ['#2E4C8F', '#E4DCC8'],
+      defaultColors: [...DEFAULTS.colors],
       haptics: true,
     });
     expect(typeof S().set).toBe('function');
@@ -102,11 +105,11 @@ describe('persistence', () => {
     await flush();
     const stored = (await AsyncStorage.getItem(SETTINGS_KEY))!;
     const saved = JSON.parse(stored);
-    expect(saved.version).toBe(1);
+    expect(saved.version).toBe(SETTINGS_VERSION);
     expect(saved.state).toEqual({
       defaultWarps: 40,
       defaultSide: 'left',
-      defaultColors: ['#2E4C8F', '#E4DCC8'],
+      defaultColors: [...DEFAULTS.colors],
       haptics: true,
       keepAwake: true,
       theme: 'light',
@@ -134,6 +137,41 @@ describe('persistence', () => {
     expect('extra' in S()).toBe(false);
   });
 
+  it('v1 → v2: the old default yarn colours (any case) become the new defaults', async () => {
+    await AsyncStorage.setItem(
+      SETTINGS_KEY,
+      JSON.stringify({ version: 1, state: { defaultWarps: 30, defaultColors: ['#2e4c8f', '#E4DCC8'] } }),
+    );
+    await rehydrateStores();
+    expect(S().defaultColors).toEqual(['#9BD8A9', '#41413F']);
+    expect(S().defaultColors).toEqual([...DEFAULTS.colors]);
+    expect(S().defaultWarps).toBe(30);
+    await flush();
+    const saved = JSON.parse((await AsyncStorage.getItem(SETTINGS_KEY))!);
+    expect(saved.version).toBe(2);
+    expect(saved.state.defaultColors).toEqual([...DEFAULTS.colors]);
+  });
+
+  it('v1 → v2: any other stored yarn colours are kept', async () => {
+    for (const colors of [
+      ['#E4DCC8', '#2E4C8F'],
+      ['#2E4C8F', '#ffffff'],
+      ['#c0392b', '#E4DCC8'],
+    ]) {
+      await resetStoresForTests();
+      await flush();
+      await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify({ version: 1, state: { defaultColors: colors } }));
+      await rehydrateStores();
+      expect(S().defaultColors).toEqual(colors);
+    }
+  });
+
+  it('v2: the old pair chosen again by the person is not touched', async () => {
+    await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify({ version: 2, state: { defaultColors: ['#2E4C8F', '#E4DCC8'] } }));
+    await rehydrateStores();
+    expect(S().defaultColors).toEqual(['#2E4C8F', '#E4DCC8']);
+  });
+
   it('migrates v0, which spelled favourites differently', async () => {
     await AsyncStorage.setItem(
       SETTINGS_KEY,
@@ -143,7 +181,7 @@ describe('persistence', () => {
     expect(S()).toMatchObject({ defaultWarps: 30, favourites: ['diamond'], legacyImportHandled: false, theme: 'system' });
     await flush();
     const saved = JSON.parse((await AsyncStorage.getItem(SETTINGS_KEY))!);
-    expect(saved.version).toBe(1);
+    expect(saved.version).toBe(SETTINGS_VERSION);
     expect(saved.state.favourites).toEqual(['diamond']);
     expect('favorites' in saved.state).toBe(false);
   });

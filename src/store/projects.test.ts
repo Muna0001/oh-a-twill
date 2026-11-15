@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { DEFAULTS } from '@/engine/types';
+
 import {
   configureProjectFiles,
   PROJECTS_KEY,
@@ -38,7 +40,7 @@ describe('createPattern', () => {
       warps: 24,
       row: 1,
       setup: { start: 0, mirror: false, side: 'left' },
-      colors: ['#2E4C8F', '#E4DCC8'],
+      colors: [...DEFAULTS.colors],
     });
     expect(pattern(id).createdAt).toBe(pattern(id).updatedAt);
     expect(P().order).toEqual([id]);
@@ -84,7 +86,7 @@ describe('createPattern', () => {
     const low = P().createPattern({ stitchId: 'plain', name: '', warps: 1, colors: ['red', 'blue'] as [string, string] });
     expect(pattern(low).warps).toBe(4);
     expect(pattern(low).name).toBe('Pattern');
-    expect(pattern(low).colors).toEqual(['#2E4C8F', '#E4DCC8']);
+    expect(pattern(low).colors).toEqual([...DEFAULTS.colors]);
   });
 
   it('gives every project its own id', () => {
@@ -203,7 +205,7 @@ describe('updatePattern', () => {
     expect(pattern(id).warps).toBe(120);
     P().updatePattern(id, { warps: NaN, colors: ['nope', '#fff'] as [string, string], setup: { start: -4 } });
     expect(pattern(id).warps).toBe(120);
-    expect(pattern(id).colors).toEqual(['#2E4C8F', '#E4DCC8']);
+    expect(pattern(id).colors).toEqual([...DEFAULTS.colors]);
     expect(pattern(id).setup.start).toBe(2);
     expect(pattern(id).row).toBe(9);
   });
@@ -503,7 +505,7 @@ describe('persistence', () => {
     await rehydrateStores();
     expect(P().order).toEqual(['a', 'b']);
     expect(P().lastOpenedId).toBeNull();
-    expect(P().projects.a).toMatchObject({ warps: 120, row: 1, setup: { start: 1, mirror: false, side: 'left' }, colors: ['#2E4C8F', '#E4DCC8'] });
+    expect(P().projects.a).toMatchObject({ warps: 120, row: 1, setup: { start: 1, mirror: false, side: 'left' }, colors: [...DEFAULTS.colors] });
     expect(P().projects.b).toMatchObject({ name: 'Picture 1', imageUri: null, imageW: 0, rows: 4, k: 8, tidy: true, weave: 'twill22' });
   });
 
