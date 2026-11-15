@@ -18,7 +18,6 @@ import { Button } from './Button';
 import { uiCopy } from './copy';
 import { Icon, type IconName } from './Icon';
 import { goBackOrHome } from './lazy';
-import { PaperShape, type PaperColor } from './PaperShape';
 import { Text } from './Text';
 import { narrowWidth, useTheme } from './theme';
 
@@ -353,21 +352,16 @@ export type EmptyStateProps = {
   icon?: IconName;
   /** Element under the message, usually a `Button`. */
   action?: ReactNode;
-  /** A torn-paper shape behind the icon. */
-  paper?: PaperColor;
-  /** Picks the shape's edge. Default 3. */
-  paperSeed?: number;
   testID?: string;
 };
 
-export function EmptyState({ title, message, icon, action, paper, paperSeed = 3, testID }: EmptyStateProps) {
+export function EmptyState({ title, message, icon, action, testID }: EmptyStateProps) {
   const theme = useTheme();
   return (
     <View testID={testID} style={{ alignItems: 'center', gap: theme.spacing.sm, paddingVertical: theme.spacing.xxl, paddingHorizontal: theme.spacing.lg }}>
-      {icon || paper ? (
-        <View style={{ width: 112, height: 88, alignItems: 'center', justifyContent: 'center', marginBottom: theme.spacing.xs }}>
-          {paper ? <PaperShape color={paper} seed={paperSeed} width={104} height={80} rotate={-5} dots style={{ top: 4, left: 4 }} /> : null}
-          {icon ? <Icon name={icon} size={36} color={paper ? 'pastelInk' : 'muted'} strokeWidth={1.5} /> : null}
+      {icon ? (
+        <View style={{ marginBottom: theme.spacing.sm }}>
+          <Icon name={icon} size={36} color="muted" strokeWidth={1.5} />
         </View>
       ) : null}
       <Text variant="heading" align="center">
