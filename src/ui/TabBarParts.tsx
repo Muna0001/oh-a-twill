@@ -24,6 +24,7 @@ export function TabBarItem({ icon, label, isFocused, href: _href, ref, style: _s
       accessibilityRole="tab"
       accessibilityLabel={label}
       accessibilityState={{ selected: focused }}
+      aria-selected={focused}
       style={({ pressed }) => ({
         flex: 1,
         alignItems: 'center',

@@ -1,6 +1,6 @@
 # Oh a Twill — weaving app build plan: web first, then iOS and Android
 
-Status: **build in progress.** One codebase, three targets, released in this order: **1. web app, 2. iOS, 3. Android.** This document is written to be handed to subagents. Each work package (WP) in section 8 is a self-contained brief; sections 1–7 are the shared context every agent needs.
+Status: **web app built (waves 0–4 done), not yet deployed.** Next: iOS (WP14), then Android (WP15, WP16). One codebase, three targets, released in this order: **1. web app, 2. iOS, 3. Android.** This document is written to be handed to subagents. Each work package (WP) in section 8 is a self-contained brief; sections 1–7 are the shared context every agent needs.
 
 Working title is "Oh a Twill" (from the repo name). See open decisions in section 11.
 

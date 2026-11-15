@@ -24,8 +24,12 @@ const FILTERS: { id: Filter; label: string }[] = [
 const GAP = 12;
 const MAX_CARD = 200;
 
-/** How many columns fit: at least 2, and cards no wider than about 200. */
+/** Below this content width (a phone with the page zoomed far up) the cards stack in one column. */
+const ONE_COLUMN_BELOW = 260;
+
+/** How many columns fit: 2 or more on a phone, and cards no wider than about 200. */
 function columnsFor(contentWidth: number): number {
+  if (contentWidth < ONE_COLUMN_BELOW) return 1;
   return Math.max(2, Math.ceil((contentWidth + GAP) / (MAX_CARD + GAP)));
 }
 
@@ -74,6 +78,7 @@ export function LibraryScreen() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        accessibilityRole="radiogroup"
         accessibilityLabel={copy.categoriesLabel}
         style={{ marginTop: theme.spacing.md, marginHorizontal: -theme.spacing.lg, flexGrow: 0 }}
         contentContainerStyle={{ gap: theme.spacing.sm, paddingHorizontal: theme.spacing.lg }}>
@@ -82,6 +87,7 @@ export function LibraryScreen() {
             key={f.id}
             label={f.label}
             tone="outline"
+            accessibilityRole="radio"
             selected={filter === f.id}
             icon={f.id === 'favorites' ? 'heart' : undefined}
             onPress={() => setFilter(f.id)}
@@ -145,13 +151,13 @@ function ContinueCard({ project }: { project: Project }) {
   const meta = project.kind === 'pattern' ? copy.rowAndWarps(project.row, project.warps) : copy.pictureRowAndWarps(project.row, project.warps);
   return (
     <Panel testID="continue-card" variant="hero">
-      <View style={{ flexDirection: 'row', gap: theme.spacing.md, alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.md, alignItems: 'center' }}>
         {stitch && project.kind === 'pattern' ? (
           <View style={{ width: 84 }}>
             <TilePreview stitch={stitch} colors={project.colors} cols={12} rows={10} mirror={project.setup.mirror} />
           </View>
         ) : null}
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 120, gap: 2 }}>
           <Text variant="label">{copy.continueLabel}</Text>
           <Text variant="heading" numberOfLines={2}>
             {project.name}
@@ -194,13 +200,13 @@ function QuickStartCard() {
   };
   return (
     <Panel testID="quick-start-card" variant="hero">
-      <View style={{ flexDirection: 'row', gap: theme.spacing.md, alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.md, alignItems: 'center' }}>
         {twill ? (
           <View style={{ width: 84 }}>
             <TilePreview stitch={twill} colors={colors} cols={12} rows={10} />
           </View>
         ) : null}
-        <View style={{ flex: 1, gap: 2 }}>
+        <View style={{ flexGrow: 1, flexShrink: 1, flexBasis: 120, gap: 2 }}>
           <Text variant="label">{copy.quickStartLabel}</Text>
           <Text variant="heading">{copy.quickStartLine(warps)}</Text>
           <Text variant="hint">{copy.quickStartHint}</Text>

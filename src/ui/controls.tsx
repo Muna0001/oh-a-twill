@@ -50,6 +50,7 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
             accessibilityRole="radio"
             accessibilityLabel={option.accessibilityLabel ?? option.label}
             accessibilityState={{ checked: on, disabled }}
+            aria-checked={on}
             disabled={disabled}
             onPress={() => {
               if (!on) onChange(option.value);
@@ -243,11 +244,16 @@ export type ChipProps = {
   size?: 'sm' | 'md';
   /** Defaults to `label`. */
   accessibilityLabel?: string;
+  /**
+   * With `onPress`: 'button' (default) reports `selected`; 'radio' reports `checked`, for one
+   * choice out of several inside an `accessibilityRole="radiogroup"` view.
+   */
+  accessibilityRole?: 'button' | 'radio';
   style?: StyleProp<ViewStyle>;
   testID?: string;
 };
 
-export function Chip({ label, tone = 'neutral', selected = false, onPress, icon, size, accessibilityLabel, style, testID }: ChipProps) {
+export function Chip({ label, tone = 'neutral', selected = false, onPress, icon, size, accessibilityLabel, accessibilityRole = 'button', style, testID }: ChipProps) {
   const theme = useTheme();
   const { colors } = theme;
   const big = (size ?? (onPress ? 'md' : 'sm')) === 'md';
@@ -258,6 +264,8 @@ export function Chip({ label, tone = 'neutral', selected = false, onPress, icon,
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
+    // Never wider than its row: with the text zoomed far up the label wraps instead.
+    maxWidth: '100%',
     gap: 6,
     borderRadius: theme.radii.chip,
     backgroundColor: bg,
@@ -270,7 +278,7 @@ export function Chip({ label, tone = 'neutral', selected = false, onPress, icon,
   const content = (
     <>
       {icon ? <Icon name={icon} color={ink} size={big ? 20 : 16} /> : null}
-      <Text variant={big ? 'body' : 'hint'} color={ink} weight={strong ? 'semibold' : big ? 'medium' : 'regular'} numberOfLines={1}>
+      <Text variant={big ? 'body' : 'hint'} color={ink} weight={strong ? 'semibold' : big ? 'medium' : 'regular'} style={{ flexShrink: 1 }}>
         {label}
       </Text>
     </>
@@ -285,9 +293,11 @@ export function Chip({ label, tone = 'neutral', selected = false, onPress, icon,
   return (
     <Pressable
       testID={testID}
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ selected }}
+      accessibilityState={accessibilityRole === 'radio' ? { checked: selected } : { selected }}
+      aria-checked={accessibilityRole === 'radio' ? selected : undefined}
+      aria-selected={accessibilityRole === 'radio' ? undefined : selected}
       onPress={onPress}
       style={({ pressed }) => [base, { cursor: 'pointer', opacity: pressed ? 0.7 : 1 }, style]}>
       {content}
@@ -317,6 +327,7 @@ export function Checkbox({ checked, onChange, label, hint, disabled = false, acc
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={hint}
       accessibilityState={{ checked, disabled }}
+      aria-checked={checked}
       disabled={disabled}
       onPress={() => onChange(!checked)}
       style={({ pressed }) => ({

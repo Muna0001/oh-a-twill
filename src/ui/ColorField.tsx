@@ -115,6 +115,7 @@ export function ColorField({ label, value, onChange, presets = yarnPresets, disa
                 accessibilityRole="button"
                 accessibilityLabel={preset.name}
                 accessibilityState={{ selected: on }}
+                aria-selected={on}
                 onPress={() => pick(normalizeHex(preset.hex) ?? preset.hex)}
                 style={({ pressed }) => ({
                   width: theme.minTouch,

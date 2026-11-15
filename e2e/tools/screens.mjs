@@ -4,14 +4,14 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { DESKTOP, PHONE, browsers, closeBrowsers, newPictureProject, openApp, quickStart, rowDone, settle, tab, visibleTestId, waitForRow } from '../lib.mjs';
+import { DESKTOP, FLOWER, PHONE, openApp, playwright, press, quickStart, rowDone, settle, tab, visibleTestId, waitForRow } from '../lib.mjs';
 
 const out = process.argv[2] || 'docs/screens';
 const which = process.argv[3] || 'phone';
 const viewports = which === 'both' ? [PHONE, DESKTOP] : which === 'desktop' ? [DESKTOP] : [PHONE];
 mkdirSync(out, { recursive: true });
 
-const [{ browser }] = await browsers();
+const browser = await playwright.chromium.launch();
 for (const vp of viewports) {
   for (const scheme of ['light', 'dark']) {
     const suffix = `${viewports.length > 1 ? `-${vp.name}` : ''}-${scheme}`;
@@ -26,7 +26,7 @@ for (const vp of viewports) {
     await visibleTestId(page, 'detail-preview').waitFor();
     await shot(page, '02-stitch-detail');
     await visibleTestId(page, 'start-weaving').click();
-    await page.getByText('3 repeats of 8, clean edges').first().waitFor();
+    await page.getByText('3 repeats of 8, clean edges').locator('visible=true').first().waitFor();
     await shot(page, '03-setup');
 
     await page.goto(new URL('/', page.url()).href);
@@ -44,8 +44,9 @@ for (const vp of viewports) {
     await press(page, 'New from picture');
     await visibleTestId(page, 'picture-add').waitFor();
     await shot(page, '06-picture-empty');
-    await page.goto(new URL('/', page.url()).href);
-    await newPictureProject(page);
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), press(page, 'Choose a picture')]);
+    await chooser.setFiles(FLOWER);
+    await visibleTestId(page, 'picture-row-card').waitFor({ timeout: 20000 });
     await shot(page, '07-picture-guide');
     await rowDone(page, 2, { testId: 'picture-next' });
     await shot(page, '08-picture-row3');
@@ -59,9 +60,5 @@ for (const vp of viewports) {
     await context.close();
   }
 }
-await closeBrowsers();
+await browser.close();
 console.log(`screens written to ${out}`);
-
-async function press(page, name) {
-  await page.getByRole('button', { name, exact: true }).locator('visible=true').first().click();
-}
