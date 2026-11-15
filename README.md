@@ -17,7 +17,8 @@ It is one Expo (React Native) codebase, released as a web app first, then for iO
 - `src/`: the app. Routes in `src/app/`, screens in `src/features/`, the pure pattern and picture engines in `src/engine/`.
 - `reference/web/`: the old single-file web app, kept read-only as the behavioural reference.
 - `e2e/`: end-to-end checks against the web export (Playwright, plain Node scripts).
-- `docs/screens/`: screenshots of every screen, phone size, light and dark.
+- `docs/design.md`: the visual spec ("paper scrapbook": warm paper canvas, soft pastels, torn-paper collage accents, a serif for big headlines and a clean sans for everything else, rounded cards floated on soft shadows).
+- `docs/screens/`: screenshots of every screen, phone size, light and dark, plus the library on a desktop.
 
 ## Run it
 
@@ -60,7 +61,7 @@ npm run web:serve    # serve dist/ on http://localhost:8081 with a fallback to i
 With a build served on port 8112 (`node scripts/serve-dist.mjs 8112 dist`):
 
 ```bash
-node e2e/tools/screens.mjs docs/screens phone   # refresh docs/screens/ (light and dark)
+node e2e/tools/screens.mjs docs/screens phone   # refresh docs/screens/ (light and dark, plus desktop-library-light.png)
 ```
 
-The app icon, favicon, splash and Android adaptive icon layers in `assets/images/` are drawn by `node e2e/tools/make-icons.mjs` (a 2/2 twill motif in `#2E4C8F` on `#EEF1EC`).
+The app icon, favicon, splash and Android adaptive icon layers in `assets/images/` are drawn by `node e2e/tools/make-icons.mjs` (the 2/2 twill motif in ink `#030302` on a marigold `#FDE99B` torn-paper square, on the canvas colour `#FFF3E7`).

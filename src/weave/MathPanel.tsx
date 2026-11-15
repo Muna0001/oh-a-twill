@@ -20,14 +20,20 @@ export function MathPanel({ stats, warps, colorWarpLength, style, testID }: Math
   const theme = useTheme();
   const items = mathItems(stats, warps, colorWarpLength);
   return (
-    <View testID={testID} style={[{ gap: 14 }, style]}>
-      {items.map((item) => (
-        <View key={item.title} accessible accessibilityLabel={`${item.title}. ${mathText(item)}`} style={{ borderTopWidth: 1, borderTopColor: theme.colors.line, paddingTop: 12 }}>
-          <Text weight="semibold">{item.title}</Text>
-          <Text color="muted" style={{ marginTop: 2 }}>
-            {item.parts.map((p, i) =>
+    <View testID={testID} style={[{ gap: 16 }, style]}>
+      {items.map((item, i) => (
+        <View
+          key={item.title}
+          accessible
+          accessibilityLabel={`${item.title}. ${mathText(item)}`}
+          style={i === 0 ? null : { borderTopWidth: 1, borderTopColor: theme.colors.line, paddingTop: 16 }}>
+          <Text variant="label" color="ink" weight="semibold">
+            {item.title}
+          </Text>
+          <Text color="graphite" tabular style={{ marginTop: 4 }}>
+            {item.parts.map((p, j) =>
               p.bold ? (
-                <Text key={i} weight="semibold" color="ink">
+                <Text key={j} weight="semibold" color="ink" tabular>
                   {p.text}
                 </Text>
               ) : (

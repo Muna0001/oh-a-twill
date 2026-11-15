@@ -1,6 +1,7 @@
 // Screenshots of every screen, light and dark. Needs a served web export.
 // Usage: node e2e/tools/screens.mjs <outDir> [phone|desktop|both]   (E2E_URL, default http://localhost:8112)
 // docs/screens/ is refreshed with: node e2e/tools/screens.mjs docs/screens phone
+// (phone mode also writes desktop-library-light.png: the library at 1280×800).
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -59,6 +60,13 @@ for (const vp of viewports) {
     await shot(page, '10-settings');
     await context.close();
   }
+}
+if (which === 'phone') {
+  const { page, context } = await openApp(browser, DESKTOP, { colorScheme: 'light' });
+  await visibleTestId(page, 'stitch-grid').waitFor();
+  await settle(page);
+  await page.screenshot({ path: join(out, 'desktop-library-light.png') });
+  await context.close();
 }
 await browser.close();
 console.log(`screens written to ${out}`);

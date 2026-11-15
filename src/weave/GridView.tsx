@@ -26,7 +26,7 @@ export type GridViewProps = {
   maxCell?: number;
   /** Space between cells in px. Default 0. */
   gap?: number;
-  /** Row (y index) outlined in the theme's `mark` colour. */
+  /** Row (y index) framed in the theme's papaya (`mark`): 2 px, radius 4. */
   highlightRow?: number;
   /** Rows drawn at `dimOpacity`. */
   dimRows?: (y: number) => boolean;
@@ -165,7 +165,8 @@ export function useAvailableWidth(): [number, (e: LayoutChangeEvent) => void] {
     const w = Math.floor(e.nativeEvent.layout.width);
     if (w > 0) setMeasured((prev) => (prev === w ? prev : w));
   }, []);
-  const guess = Math.max(120, Math.min(windowWidth, theme.maxContentWidth) - 4 * theme.spacing.lg - 2);
+  // Screen gutters, card padding and a strip or grid well's padding.
+  const guess = Math.max(120, Math.min(windowWidth, theme.maxContentWidth) - 2 * (theme.spacing.gutter + theme.spacing.card + 12) - 2);
   return [measured ?? guess, onLayout];
 }
 
@@ -191,7 +192,6 @@ const GridBody = memo(function GridBody({ cols, rows, colorAt, cell, gap = 0, hi
     }
     return out;
   }, [rows, dimRows]);
-  const outline = Math.min(3, Math.max(2, Math.round(cell / 4)));
   const showMark = highlightRow != null && highlightRow >= 0 && highlightRow < rows;
   return (
     <View
@@ -206,7 +206,7 @@ const GridBody = memo(function GridBody({ cols, rows, colorAt, cell, gap = 0, hi
         <View
           testID={testID ? `${testID}-mark` : undefined}
           pointerEvents="none"
-          style={{ position: 'absolute', left: 0, top: highlightRow * pitch, width, height: cell, borderWidth: outline, borderColor: theme.colors.mark, borderRadius: 2 }}
+          style={{ position: 'absolute', left: 0, top: highlightRow * pitch, width, height: cell, borderWidth: 2, borderColor: theme.colors.papaya, borderRadius: Math.min(4, cell / 2) }}
         />
       ) : null}
       {onPressRow ? (

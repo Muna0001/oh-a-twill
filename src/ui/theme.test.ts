@@ -1,12 +1,24 @@
-import { contrastRatio, darkColors, lightColors, normalizeHex, type ColorToken, type ThemeColors } from './theme';
+import { contrastRatio, darkColors, lightColors, normalizeHex, typeScale, type ColorToken, type ThemeColors } from './theme';
 
+/** Text on its background, each at least 4.5:1 in both themes (WCAG AA body text). */
 const pairs: [ColorToken, ColorToken][] = [
   ['ink', 'bg'],
   ['ink', 'surface'],
+  ['ink', 'surfaceAlt'],
+  ['muted', 'bg'],
   ['muted', 'surface'],
+  ['muted', 'surfaceAlt'],
+  ['graphite', 'bg'],
+  ['graphite', 'surface'],
+  ['graphite', 'surfaceAlt'],
+  ['ink', 'underChip'],
   ['btnInk', 'btn'],
   ['weftInk', 'weft'],
   ['warn', 'warnBg'],
+  ['pastelInk', 'mint'],
+  ['pastelInk', 'marigold'],
+  ['pastelInk', 'periwinkle'],
+  ['pastelInk', 'overChip'],
 ];
 
 describe('contrastRatio', () => {
@@ -27,19 +39,48 @@ describe.each<[string, ThemeColors]>([
 });
 
 describe('theme tokens', () => {
-  it('match the web CSS exactly', () => {
+  it('match docs/design.md exactly', () => {
     expect(lightColors).toEqual({
-      bg: '#EEF1EC', surface: '#FFFFFF', ink: '#1C2333', muted: '#5A6375', line: '#D5DAD1',
-      weft: '#2E4C8F', weftInk: '#FFFFFF', warp: '#D8D1C0', warpShade: '#C2B9A4',
-      mark: '#D9A521', overChip: '#E2E8F5', underChip: '#EDEAE2',
-      warn: '#7A5100', warnBg: '#FBF0D3', btn: '#1C2333', btnInk: '#FFFFFF',
+      bg: '#FFF3E7', surface: '#FFFFFF', surfaceAlt: '#F7F2EC', ink: '#030302', muted: '#5C5852',
+      graphite: '#41413F', stone: '#BEBBBA', line: '#E1E1E1', cloud: '#EFEFEF',
+      mint: '#9BD8A9', marigold: '#FDE99B', periwinkle: '#B8CAF5', pastelInk: '#030302', papaya: '#FF4500',
+      weft: '#030302', weftInk: '#FFFFFF', warp: '#E9DCCB', warpShade: '#CDBBA3',
+      mark: '#FF4500', overChip: '#B8CAF5', underChip: '#FFFFFF',
+      warn: '#030302', warnBg: '#FDE99B', btn: '#030302', btnInk: '#FFFFFF',
     });
     expect(darkColors).toEqual({
-      bg: '#11151D', surface: '#1A202B', ink: '#E6E9EF', muted: '#9AA3B5', line: '#2C3342',
-      weft: '#7C98DC', weftInk: '#0F1420', warp: '#4B505D', warpShade: '#5E6474',
-      mark: '#E8BE55', overChip: '#22314F', underChip: '#2C2F38',
-      warn: '#F0C66A', warnBg: '#352B15', btn: '#E6E9EF', btnInk: '#11151D',
+      bg: '#17130F', surface: '#221D18', surfaceAlt: '#2A241E', ink: '#FFF3E7', muted: '#C9BFB3',
+      graphite: '#E2D8CC', stone: '#6E665E', line: '#3A332C', cloud: '#2F2923',
+      mint: '#9BD8A9', marigold: '#FDE99B', periwinkle: '#B8CAF5', pastelInk: '#030302', papaya: '#FF7A45',
+      weft: '#FFF3E7', weftInk: '#17130F', warp: '#5A5148', warpShade: '#6E6359',
+      mark: '#FF7A45', overChip: '#B8CAF5', underChip: '#2A241E',
+      warn: '#030302', warnBg: '#FDE99B', btn: '#FFF3E7', btnInk: '#17130F',
     });
+  });
+
+  it('keep mark and overChip as aliases of papaya and periwinkle', () => {
+    for (const colors of [lightColors, darkColors]) {
+      expect(colors.mark).toBe(colors.papaya);
+      expect(colors.overChip).toBe(colors.periwinkle);
+    }
+  });
+});
+
+describe('type scale', () => {
+  it('uses the serif only for 24 px and up', () => {
+    for (const spec of Object.values(typeScale)) {
+      if (spec.face === 'serif') expect(spec.fontSize).toBeGreaterThanOrEqual(24);
+    }
+    expect(typeScale.display.face).toBe('serif');
+    expect(typeScale.title.face).toBe('serif');
+    expect(typeScale.subtitle.face).toBe('serif');
+  });
+
+  it('makes rowNumber an alias of display', () => {
+    expect(typeScale.rowNumber).toBe(typeScale.display);
+    expect(typeScale.display).toMatchObject({ fontSize: 46, lineHeight: 50, letterSpacing: -1.38 });
+    // Proportional figures: Lora's tabular "1" leaves a gap in "Row 1".
+    expect(typeScale.display.tabular).toBeFalsy();
   });
 });
 

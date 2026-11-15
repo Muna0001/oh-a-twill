@@ -5,12 +5,12 @@ import { View } from 'react-native';
 import { tileRowName, type PatternSetup, type Side, type Stitch } from '@/engine';
 import { getStitch, warpOrderText } from '@/catalog';
 import { useProject, useProjects, useSettings, type PatternProject } from '@/store';
-import { BottomBar, Button, ColorField, EmptyState, Header, Panel, Screen, Segmented, Stepper, Text, useTheme } from '@/ui';
+import { BottomBar, Button, Chip, ColorField, EmptyState, Header, Panel, PaperShape, Screen, Segmented, Stepper, Text, TextField, useTheme } from '@/ui';
 import { TilePreview } from '@/weave';
 
 import { copy } from './copy';
 import { backOr, fitHint } from './helpers';
-import { Field, TextField } from './parts';
+import { Field } from './parts';
 
 const MIN_WARPS = 4;
 const MAX_WARPS = 120;
@@ -180,20 +180,23 @@ function SetupForm({ title, stitch, values, onChange, name, onName, onNameCommit
       scroll
       header={<CloseHeader title={title} onClose={onClose} />}
       footer={<BottomBar center={<Button variant="primary" size="lg" fullWidth label={primary} onPress={onPrimary} />} />}>
-      <Panel>
-        <View style={{ flexDirection: 'row', gap: theme.spacing.lg, alignItems: 'flex-start' }}>
-          <TilePreview stitch={stitch} colors={colors} mirror={setup.mirror} cols={16} rows={12} style={{ width: 96 }} testID="setup-preview" />
-          <View style={{ flex: 1, gap: theme.spacing.xs }}>
-            <Text variant="heading">{stitch.name}</Text>
-            <Text variant="hint">{stitch.desc}</Text>
-            {existing ? (
-              <Text variant="hint" style={{ marginTop: theme.spacing.xs }}>
-                {copy.setup.differentStitch}
-              </Text>
-            ) : null}
+      <View style={{ marginBottom: theme.spacing.cardGap }}>
+        <PaperShape color="periwinkle" seed={9} width={96} height={72} rotate={-8} dots style={{ top: -20, left: -16 }} />
+        <Panel style={{ marginBottom: 0 }}>
+          <View style={{ flexDirection: 'row', gap: theme.spacing.lg, alignItems: 'flex-start' }}>
+            <TilePreview stitch={stitch} colors={colors} mirror={setup.mirror} cols={16} rows={12} style={{ width: 96, borderRadius: theme.radii.field }} testID="setup-preview" />
+            <View style={{ flex: 1, gap: theme.spacing.xs }}>
+              <Text variant="subtitle">{stitch.name}</Text>
+              <Text variant="hint">{stitch.desc}</Text>
+              {existing ? (
+                <Text variant="hint" style={{ marginTop: theme.spacing.xs }}>
+                  {copy.setup.differentStitch}
+                </Text>
+              ) : null}
+            </View>
           </View>
-        </View>
-      </Panel>
+        </Panel>
+      </View>
 
       <Panel>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, flexWrap: 'wrap' }}>
@@ -220,8 +223,9 @@ function SetupForm({ title, stitch, values, onChange, name, onName, onNameCommit
           <Field label={copy.setup.startOn} hint={existing && row > 1 ? copy.setup.startResets(row) : undefined}>
             <View accessibilityRole="radiogroup" accessibilityLabel={copy.setup.startOn} style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm }}>
               {Array.from({ length: tileRows }, (_, k) => (
-                <Button
+                <Chip
                   key={k}
+                  tone="outline"
                   accessibilityRole="radio"
                   label={tileRowName(stitch, setup, k)}
                   selected={k === setup.start}
@@ -262,6 +266,7 @@ function SetupForm({ title, stitch, values, onChange, name, onName, onNameCommit
         <Field label={copy.setup.nameLabel} hint={existing ? undefined : copy.setup.nameHint}>
           <View style={{ flexDirection: 'row' }}>
             <TextField
+              style={{ flex: 1 }}
               accessibilityLabel={copy.setup.nameLabel}
               value={name}
               onChangeText={onName}

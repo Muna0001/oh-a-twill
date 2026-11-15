@@ -38,6 +38,7 @@ The sandbox blocks Expo's API host, so install Expo packages with `EXPO_OFFLINE=
 - React Native Testing Library v14 is async: `await render(...)`, `await fireEvent.press(...)`.
 - In Node scripts, load Playwright with `createRequire(import.meta.url)('playwright')`; a bare ESM import does not resolve from the repo.
 - For custom text, spread `theme.fonts.semibold` (etc.) from `useTheme()`; do not set `fontWeight` yourself.
+- **Look and feel:** `docs/design.md` is the visual spec (paper canvas, pastels, Lora headlines 24 px and up, Inter for everything else, floated cards). Use theme tokens and variants; no colour literals or ad-hoc borders in screens.
 - `Stepper` commits typed numbers on blur/submit, not per keystroke.
 - Import `@/store` in tests freely (it runs in memory); to test persistence, mock AsyncStorage with its bundled jest mock.
 - Read `src/ui/index.ts` and the component files for the primitives' props before building screens. Use them; do not restyle from scratch.

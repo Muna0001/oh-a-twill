@@ -15,6 +15,8 @@ export {
   typeScale,
   minTouch,
   maxContentWidth,
+  narrowWidth,
+  skyGradient,
   normalizeHex,
   luminance,
   contrastRatio,
@@ -24,8 +26,14 @@ export {
   type ThemePreference,
   type ThemeProviderProps,
   type ColorToken,
+  type PastelToken,
   type FontWeightName,
+  type FontFace,
   type TypeVariant,
+  type TypeSpec,
+  type ShadowName,
+  type ThemeShadows,
+  type ThemeCards,
 } from './theme';
 export { fontFamilies } from './fonts';
 
@@ -40,6 +48,11 @@ export {
   Tip,
   Swatch,
   SearchField,
+  TextField,
+  FocusRing,
+  useFieldFocus,
+  type ChipTone,
+  type TextFieldProps,
   type SegmentedOption,
   type SegmentedProps,
   type StepperProps,
@@ -60,6 +73,7 @@ export {
   Sheet,
   useInsets,
   useReducedMotion,
+  useCardPadding,
   type ScreenProps,
   type ScreenEdge,
   type PanelProps,
@@ -69,3 +83,4 @@ export {
   type EmptyStateProps,
   type SheetProps,
 } from './layout';
+export { PaperShape, paperPath, type PaperShapeProps, type PaperColor } from './PaperShape';

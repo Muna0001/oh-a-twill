@@ -78,7 +78,7 @@ function StitchDetail({ stitch }: { stitch: Stitch }) {
   return (
     <Screen
       scroll
-      header={<Header title={stitch.name} subtitle={CATEGORIES.find((c) => c.id === stitch.category)?.label} back right={<FavouriteToggle stitchId={stitch.id} />} />}
+      header={<Header title={stitch.name} titleVariant="subtitle" subtitle={CATEGORIES.find((c) => c.id === stitch.category)?.label} back right={<FavouriteToggle stitchId={stitch.id} />} />}
       footer={
         <BottomBar
           center={
@@ -94,12 +94,23 @@ function StitchDetail({ stitch }: { stitch: Stitch }) {
           }
         />
       }>
-      <View style={{ gap: theme.spacing.md, marginBottom: theme.spacing.lg, width: '100%', maxWidth: 520, alignSelf: 'center' }}>
-        <TilePreview stitch={stitch} colors={colors} cols={24} rows={18} face={face} accessibilityLabel={copy.previewLabel(stitch.name, face)} testID="detail-preview" />
+      <View style={{ gap: theme.spacing.lg, marginBottom: theme.spacing.xl, width: '100%', maxWidth: 520, alignSelf: 'center' }}>
+        <View style={[theme.cards.card, { padding: theme.spacing.md }]}>
+          <TilePreview
+            stitch={stitch}
+            colors={colors}
+            cols={24}
+            rows={18}
+            face={face}
+            accessibilityLabel={copy.previewLabel(stitch.name, face)}
+            style={{ borderRadius: theme.radii.field }}
+            testID="detail-preview"
+          />
+        </View>
         <Segmented options={FACES} value={face} onChange={setFace} accessibilityLabel={copy.faceLabel} />
       </View>
 
-      <View style={{ gap: theme.spacing.sm, marginBottom: theme.spacing.lg }}>
+      <View style={{ gap: theme.spacing.md, marginBottom: theme.spacing.xl }}>
         {stitch.aliases.length > 0 ? <Text color="muted">{copy.alsoCalled(stitch.aliases)}</Text> : null}
         <Text>{stitch.desc}</Text>
         <DifficultyDots level={stitch.difficulty} size={9} testID="detail-difficulty" />

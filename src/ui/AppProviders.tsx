@@ -60,7 +60,7 @@ function WebChrome() {
     }
     el.textContent =
       `html,body{background:${colors.bg};color-scheme:${scheme}}` +
-      `:focus-visible{outline:2px solid ${colors.mark};outline-offset:2px}` +
+      `:focus-visible{outline:2px solid ${colors.papaya};outline-offset:2px}` +
       `input:focus-visible{outline-offset:-2px}` +
       `body{-webkit-font-smoothing:antialiased}`;
   }, [colors, scheme]);

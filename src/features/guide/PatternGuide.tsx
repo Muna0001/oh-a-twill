@@ -149,9 +149,9 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
   return (
     <Screen scroll scrollRef={scrollRef} header={header} footer={footer} testID="pattern-guide">
       <View ref={cardRef} accessibilityLiveRegion="polite" testID="guide-row-card">
-        <Panel variant="hero" style={{ gap: theme.spacing.md }}>
+        <Panel variant="hero" style={{ gap: theme.spacing.lg }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: theme.spacing.sm }}>
-            <Text variant="rowNumber" accessibilityRole="header" testID="guide-row">
+            <Text variant="display" accessibilityRole="header" testID="guide-row">
               {copy.row(row)}
             </Text>
             <DirectionPill ltr={info.ltr} testID="guide-direction" />

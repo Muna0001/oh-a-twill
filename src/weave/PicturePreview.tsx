@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, type ComponentRef } from 'reac
 import { ScrollView, View, useWindowDimensions } from 'react-native';
 
 import type { PictureGrid } from '@/engine';
+import { useTheme } from '@/ui';
 
 import { weaveCopy } from './copy';
 import { GridView, fitCell, useAvailableWidth } from './GridView';
@@ -12,17 +13,18 @@ export type PicturePreviewProps = {
   currentRow: number;
   /** Called with the row number (1-based) that was tapped. */
   onJump: (row: number) => void;
-  /** Tallest the preview gets before it scrolls. Default 70% of the window height. */
+  /** Tallest the preview gets before it scrolls (inside its well). Default 70% of the window height. */
   maxHeight?: number;
   testID?: string;
 };
 
 /**
- * The whole picture as it will be woven. The current row is outlined, rows still to weave
+ * The whole picture as it will be woven, in a `surfaceAlt` well. The current row is framed in papaya, rows still to weave
  * (above it) are lightened, tapping a row jumps to it, and it keeps the current row in view.
  */
 export function PicturePreview({ pic, currentRow, onJump, maxHeight, testID }: PicturePreviewProps) {
   const { W, H } = pic;
+  const theme = useTheme();
   const window = useWindowDimensions();
   const [width, onLayout] = useAvailableWidth();
   const cell = fitCell(width, W, 0, 6, 28);
@@ -62,16 +64,18 @@ export function PicturePreview({ pic, currentRow, onJump, maxHeight, testID }: P
     </View>
   );
   return (
-    <View onLayout={onLayout} style={{ alignSelf: 'stretch' }}>
-      <ScrollView ref={scroller} nestedScrollEnabled testID={testID ? `${testID}-scroll` : undefined} style={{ maxHeight: limit, borderRadius: 6, alignSelf: 'flex-start', width: Math.min(W * cell, width) }}>
-        {W * cell > width ? (
-          <ScrollView horizontal nestedScrollEnabled>
-            {grid}
-          </ScrollView>
-        ) : (
-          grid
-        )}
-      </ScrollView>
+    <View style={[{ alignSelf: 'stretch', padding: 12, alignItems: 'center' }, theme.cards.well]}>
+      <View onLayout={onLayout} style={{ alignSelf: 'stretch', alignItems: 'center' }}>
+        <ScrollView ref={scroller} nestedScrollEnabled testID={testID ? `${testID}-scroll` : undefined} style={{ maxHeight: limit, borderRadius: 4, alignSelf: 'center', width: Math.min(W * cell, width) }}>
+          {W * cell > width ? (
+            <ScrollView horizontal nestedScrollEnabled>
+              {grid}
+            </ScrollView>
+          ) : (
+            grid
+          )}
+        </ScrollView>
+      </View>
     </View>
   );
 }

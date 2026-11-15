@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Pressable, TextInput, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { Button } from './Button';
-import { Swatch } from './controls';
+import { Swatch, TextField } from './controls';
 import { uiCopy } from './copy';
 import { Icon } from './Icon';
 import { Sheet } from './layout';
@@ -96,8 +96,8 @@ export function ColorField({ label, value, onChange, presets = yarnPresets, disa
           cursor: disabled ? 'auto' : 'pointer',
           opacity: disabled ? 0.4 : pressed ? 0.7 : 1,
         })}>
-        <View style={{ padding: 2, borderWidth: 1, borderColor: theme.colors.line, borderRadius: theme.radii.field }}>
-          <Swatch color={value} size={36} radius={5} />
+        <View style={{ padding: 3, backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.line, borderRadius: theme.radii.swatch + 4 }}>
+          <Swatch color={value} size={36} radius={theme.radii.swatch} />
         </View>
         <Text>{label}</Text>
       </Pressable>
@@ -120,7 +120,7 @@ export function ColorField({ label, value, onChange, presets = yarnPresets, disa
                 style={({ pressed }) => ({
                   width: theme.minTouch,
                   height: theme.minTouch,
-                  borderRadius: theme.radii.button,
+                  borderRadius: theme.radii.swatch + 4,
                   padding: 3,
                   borderWidth: 2,
                   borderColor: on ? theme.colors.ink : 'transparent',
@@ -130,14 +130,14 @@ export function ColorField({ label, value, onChange, presets = yarnPresets, disa
                 <View
                   style={{
                     flex: 1,
-                    borderRadius: 6,
+                    borderRadius: theme.radii.swatch,
                     backgroundColor: preset.hex,
                     borderWidth: 1,
                     borderColor: 'rgba(0,0,0,0.18)',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}>
-                  {on ? <Icon name="check" size={18} strokeWidth={2.4} color={luminance(preset.hex) > 0.4 ? '#1C2333' : '#FFFFFF'} /> : null}
+                  {on ? <Icon name="check" size={18} strokeWidth={2.4} color={luminance(preset.hex) > 0.4 ? '#030302' : '#FFFFFF'} /> : null}
                 </View>
               </Pressable>
             );
@@ -148,38 +148,21 @@ export function ColorField({ label, value, onChange, presets = yarnPresets, disa
           {uiCopy.hexLabel}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm }}>
-          <Swatch color={normalizeHex(hex) ?? 'transparent'} size={36} radius={6} />
-          <TextInput
+          <Swatch color={normalizeHex(hex) ?? 'transparent'} size={36} />
+          <TextField
             accessibilityLabel={uiCopy.hexLabel}
             value={hex}
             onChangeText={(text) => {
               setHex(text);
               setError(false);
             }}
-            onSubmitEditing={applyHex}
+            onSubmit={applyHex}
             placeholder={uiCopy.hexPlaceholder}
-            placeholderTextColor={theme.colors.muted}
             autoCapitalize="characters"
-            autoCorrect={false}
             maxLength={7}
-            returnKeyType="done"
-            style={[
-              {
-                flex: 1,
-                minWidth: 0,
-                height: theme.minTouch,
-                paddingHorizontal: 12,
-                paddingVertical: 0,
-                fontSize: 16,
-                color: theme.colors.ink,
-                backgroundColor: theme.colors.bg,
-                borderWidth: 1,
-                borderColor: error ? theme.colors.warn : theme.colors.line,
-                borderRadius: theme.radii.button,
-                fontVariant: ['tabular-nums'],
-              },
-              theme.fonts.medium,
-            ]}
+            invalid={error}
+            tabular
+            style={{ flex: 1, minWidth: 0 }}
           />
           <Button variant="primary" label={uiCopy.hexApply} onPress={applyHex} />
         </View>

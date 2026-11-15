@@ -1,10 +1,49 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, TextInput, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 
 import { uiCopy } from './copy';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
-import { useTheme } from './theme';
+import { useTheme, type PastelToken } from './theme';
+
+/** On web the browser's own focus outline is drawn by the field's ring instead. */
+const bareInput = { outlineWidth: 0 } as TextStyle;
+
+/** Focus state for a text field: `[focused, { onFocus, onBlur }]`. */
+export function useFieldFocus(onBlur?: () => void): [boolean, { onFocus: () => void; onBlur: () => void }] {
+  const [focused, setFocused] = useState(false);
+  return [
+    focused,
+    {
+      onFocus: () => setFocused(true),
+      onBlur: () => {
+        setFocused(false);
+        onBlur?.();
+      },
+    },
+  ];
+}
+
+/** The 2 px papaya focus ring drawn over a field's 1 px border. Place inside a relatively positioned field. */
+export function FocusRing({ visible, radius }: { visible: boolean; radius?: number }) {
+  const theme = useTheme();
+  if (!visible) return null;
+  return (
+    <View
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        top: -1,
+        left: -1,
+        right: -1,
+        bottom: -1,
+        borderWidth: 2,
+        borderColor: theme.colors.papaya,
+        borderRadius: radius ?? theme.radii.field,
+      }}
+    />
+  );
+}
 
 export type SegmentedOption<T extends string> = {
   value: T;
@@ -36,10 +75,11 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
       style={{
         flexDirection: 'row',
         alignSelf: fullWidth ? 'stretch' : 'flex-start',
-        borderWidth: 1,
-        borderColor: theme.colors.line,
-        borderRadius: theme.radii.button,
-        overflow: 'hidden',
+        maxWidth: '100%',
+        padding: 3,
+        gap: 2,
+        backgroundColor: theme.colors.surfaceAlt,
+        borderRadius: theme.radii.pill,
         opacity: disabled ? 0.4 : 1,
       }}>
       {options.map((option) => {
@@ -55,20 +95,28 @@ export function Segmented<T extends string>({ options, value, onChange, accessib
             onPress={() => {
               if (!on) onChange(option.value);
             }}
-            style={({ pressed }) => ({
-              flexGrow: fullWidth ? 1 : 0,
-              flexBasis: fullWidth ? 0 : 'auto',
-              minHeight: theme.minTouch - 2,
-              minWidth: theme.minTouch,
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: on ? theme.colors.btn : 'transparent',
-              cursor: disabled ? 'auto' : 'pointer',
-              opacity: pressed ? 0.7 : 1,
-            })}>
-            <Text color={on ? 'btnInk' : 'ink'} weight={on ? 'semibold' : 'regular'} numberOfLines={1}>
+            hitSlop={{ top: 3, bottom: 3 }}
+            style={(state) => {
+              const { pressed, hovered } = state as { pressed: boolean; hovered?: boolean };
+              return [
+                {
+                  flexGrow: fullWidth ? 1 : 0,
+                  flexShrink: 1,
+                  flexBasis: fullWidth ? 0 : 'auto',
+                  minHeight: theme.minTouch - 4,
+                  minWidth: theme.minTouch,
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: theme.radii.pill,
+                  backgroundColor: on ? theme.colors.surface : !disabled && (pressed || hovered) ? theme.colors.cloud : 'transparent',
+                  cursor: disabled ? 'auto' : 'pointer',
+                },
+                on ? theme.shadows.segment : null,
+              ];
+            }}>
+            <Text color={on ? 'ink' : 'graphite'} weight={on ? 'semibold' : 'medium'} numberOfLines={1}>
               {option.label}
             </Text>
           </Pressable>
@@ -119,6 +167,7 @@ export function Stepper({
 }: StepperProps) {
   const theme = useTheme();
   const [draft, setDraft] = useState<string | null>(null);
+  const [focused, focusHandlers] = useFieldFocus();
   const latest = useRef({ value, min, max, step, onChange });
   useEffect(() => {
     latest.current = { value, min, max, step, onChange };
@@ -176,10 +225,12 @@ export function Stepper({
           height: theme.minTouch,
           alignItems: 'center',
           justifyContent: 'center',
+          borderRadius: theme.radii.field - 1,
+          backgroundColor: pressed && !off ? theme.colors.cloud : 'transparent',
           cursor: off ? 'auto' : 'pointer',
-          opacity: off ? 0.35 : pressed ? 0.6 : 1,
+          opacity: off ? 0.35 : 1,
         })}>
-        <Icon name={icon} />
+        <Icon name={icon} color={off ? 'stone' : 'ink'} />
       </Pressable>
     );
   };
@@ -191,17 +242,23 @@ export function Stepper({
         flexDirection: 'row',
         alignItems: 'center',
         alignSelf: 'flex-start',
+        backgroundColor: theme.colors.surface,
         borderWidth: 1,
         borderColor: theme.colors.line,
-        borderRadius: theme.radii.button,
+        borderRadius: theme.radii.field,
       }}>
+      <FocusRing visible={focused} />
       {side(-1, decrementLabel, 'minus')}
       <TextInput
         accessibilityLabel={accessibilityLabel}
         value={draft ?? String(value)}
         editable={!disabled}
         onChangeText={(text) => setDraft(text.replace(min < 0 ? /[^0-9-]/g : /[^0-9]/g, ''))}
-        onBlur={commit}
+        onFocus={focusHandlers.onFocus}
+        onBlur={() => {
+          focusHandlers.onBlur();
+          commit();
+        }}
         onSubmitEditing={commit}
         keyboardType="number-pad"
         inputMode="numeric"
@@ -219,7 +276,8 @@ export function Stepper({
             fontVariant: ['tabular-nums'],
             opacity: disabled ? 0.4 : 1,
           },
-          theme.fonts.bold,
+          theme.fonts.semibold,
+          bareInput,
         ]}
       />
       {side(1, incrementLabel, 'plus')}
@@ -227,15 +285,18 @@ export function Stepper({
   );
 }
 
+export type ChipTone = 'neutral' | 'outline' | 'over' | 'weft' | PastelToken;
+
 export type ChipProps = {
   label: string;
   /**
-   * 'neutral' (under-chip background, muted text), 'over' (over-chip background, ink semibold:
-   * the direction pill), 'weft' (weft background), 'outline' (surface with a line border).
+   * 'neutral' (surfaceAlt, graphite text), 'outline' (surface with a `line` border: filters),
+   * 'over' (periwinkle: the direction pill), 'weft' (ink fill), or a pastel — 'mint'
+   * (Finished), 'marigold' (current repeat row), 'periwinkle' — with `pastelInk` text.
    * Default 'neutral'.
    */
-  tone?: 'neutral' | 'over' | 'weft' | 'outline';
-  /** Filled with the button colour ("now" / active filter). */
+  tone?: ChipTone;
+  /** Ink fill with `btnInk` text (selected filter, "now"). */
   selected?: boolean;
   /** Makes the chip a button. */
   onPress?: () => void;
@@ -253,13 +314,25 @@ export type ChipProps = {
   testID?: string;
 };
 
+/** A pill: filters, "Start on" choices, repeat rows, status. */
 export function Chip({ label, tone = 'neutral', selected = false, onPress, icon, size, accessibilityLabel, accessibilityRole = 'button', style, testID }: ChipProps) {
   const theme = useTheme();
   const { colors } = theme;
   const big = (size ?? (onPress ? 'md' : 'sm')) === 'md';
-  const bg = selected ? colors.btn : tone === 'over' ? colors.overChip : tone === 'weft' ? colors.weft : tone === 'outline' ? colors.surface : colors.underChip;
-  const ink = selected ? colors.btnInk : tone === 'weft' ? colors.weftInk : tone === 'neutral' ? colors.muted : colors.ink;
-  const strong = selected || tone === 'over' || tone === 'weft';
+  const pastel = tone === 'mint' || tone === 'marigold' || tone === 'periwinkle' || tone === 'over';
+  const bg = selected
+    ? colors.btn
+    : tone === 'over'
+      ? colors.overChip
+      : pastel
+        ? colors[tone as PastelToken]
+        : tone === 'weft'
+          ? colors.weft
+          : tone === 'outline'
+            ? colors.surface
+            : colors.surfaceAlt;
+  const ink = selected ? colors.btnInk : pastel ? colors.pastelInk : tone === 'weft' ? colors.weftInk : tone === 'neutral' ? colors.graphite : colors.ink;
+  const strong = selected || pastel || tone === 'weft';
   const base: ViewStyle = {
     flexDirection: 'row',
     alignItems: 'center',
@@ -267,18 +340,18 @@ export function Chip({ label, tone = 'neutral', selected = false, onPress, icon,
     // Never wider than its row: with the text zoomed far up the label wraps instead.
     maxWidth: '100%',
     gap: 6,
-    borderRadius: theme.radii.chip,
+    borderRadius: theme.radii.pill,
     backgroundColor: bg,
     borderWidth: 1,
     borderColor: tone === 'outline' && !selected ? colors.line : bg,
-    paddingHorizontal: big ? 14 : 10,
+    paddingHorizontal: big ? 16 : 11,
     paddingVertical: big ? 8 : 3,
     minHeight: big ? (onPress ? theme.minTouch : 36) : undefined,
   };
   const content = (
     <>
       {icon ? <Icon name={icon} color={ink} size={big ? 20 : 16} /> : null}
-      <Text variant={big ? 'body' : 'hint'} color={ink} weight={strong ? 'semibold' : big ? 'medium' : 'regular'} style={{ flexShrink: 1 }}>
+      <Text variant={big ? 'body' : 'hint'} color={ink} weight={strong ? 'semibold' : 'medium'} style={{ flexShrink: 1 }}>
         {label}
       </Text>
     </>
@@ -299,7 +372,11 @@ export function Chip({ label, tone = 'neutral', selected = false, onPress, icon,
       aria-checked={accessibilityRole === 'radio' ? selected : undefined}
       aria-selected={accessibilityRole === 'radio' ? undefined : selected}
       onPress={onPress}
-      style={({ pressed }) => [base, { cursor: 'pointer', opacity: pressed ? 0.7 : 1 }, style]}>
+      style={(state) => {
+        const { pressed, hovered } = state as { pressed: boolean; hovered?: boolean };
+        const active = pressed || !!hovered;
+        return [base, { cursor: 'pointer' }, active && !selected && tone === 'outline' ? { backgroundColor: colors.cloud, borderColor: colors.line } : null, active && selected ? { opacity: 0.85 } : null, style];
+      }}>
       {content}
     </Pressable>
   );
@@ -342,10 +419,10 @@ export function Checkbox({ checked, onChange, label, hint, disabled = false, acc
         style={{
           width: 22,
           height: 22,
-          borderRadius: 6,
+          borderRadius: theme.radii.swatch,
           borderWidth: checked ? 0 : 1.5,
           borderColor: theme.colors.muted,
-          backgroundColor: checked ? theme.colors.weft : 'transparent',
+          backgroundColor: checked ? theme.colors.weft : theme.colors.surface,
           alignItems: 'center',
           justifyContent: 'center',
         }}>
@@ -368,7 +445,7 @@ export type TipProps = {
   testID?: string;
 };
 
-/** Warning box (warn on warnBg). Announced as an alert. */
+/** Tip or warning box: ink on marigold, radius 14. Announced as an alert. */
 export function Tip({ children, icon = 'exclamation-triangle', style, testID }: TipProps) {
   const theme = useTheme();
   return (
@@ -379,18 +456,18 @@ export function Tip({ children, icon = 'exclamation-triangle', style, testID }: 
         {
           flexDirection: 'row',
           alignItems: 'flex-start',
-          gap: 9,
+          gap: 10,
           backgroundColor: theme.colors.warnBg,
-          borderRadius: theme.radii.button,
-          paddingVertical: 10,
-          paddingHorizontal: 12,
+          borderRadius: theme.radii.field,
+          paddingVertical: 12,
+          paddingHorizontal: 14,
         },
         style,
       ]}>
-      <View style={{ marginTop: 1 }}>
+      <View style={{ marginTop: 2 }}>
         <Icon name={icon} color="warn" />
       </View>
-      <Text color="warn" style={{ flex: 1, fontSize: 15, lineHeight: 22 }}>
+      <Text color="warn" style={{ flex: 1, fontSize: 15, lineHeight: 22, letterSpacing: -0.15 }}>
         {children}
       </Text>
     </View>
@@ -402,7 +479,7 @@ export type SwatchProps = {
   color: string;
   /** Default 16. */
   size?: number;
-  /** Corner radius. Default a quarter of `size`. */
+  /** Corner radius. Default 6 (half of `size` when smaller). */
   radius?: number;
   /** Set to have screen readers announce the swatch. */
   accessibilityLabel?: string;
@@ -421,7 +498,7 @@ export function Swatch({ color, size = 16, radius, accessibilityLabel, style, te
         {
           width: size,
           height: size,
-          borderRadius: radius ?? size / 4,
+          borderRadius: radius ?? Math.min(6, size / 2),
           backgroundColor: color,
           borderWidth: 1,
           borderColor: 'rgba(0,0,0,0.18)',
@@ -445,35 +522,38 @@ export type SearchFieldProps = {
 
 export function SearchField({ value, onChangeText, placeholder, accessibilityLabel = uiCopy.search, style, testID }: SearchFieldProps) {
   const theme = useTheme();
+  const [focused, focusHandlers] = useFieldFocus();
   return (
     <View
       style={[
         {
           flexDirection: 'row',
           alignItems: 'center',
-          minHeight: theme.minTouch,
-          paddingLeft: 12,
+          minHeight: theme.minTouch + 4,
+          paddingLeft: 14,
           gap: theme.spacing.sm,
-          backgroundColor: theme.colors.surface,
+          backgroundColor: theme.colors.surfaceAlt,
           borderWidth: 1,
           borderColor: theme.colors.line,
-          borderRadius: theme.radii.button,
+          borderRadius: theme.radii.field,
         },
         style,
       ]}>
+      <FocusRing visible={focused} />
       <Icon name="magnifying-glass" color="muted" />
       <TextInput
         testID={testID}
         accessibilityLabel={accessibilityLabel}
         value={value}
         onChangeText={onChangeText}
+        {...focusHandlers}
         placeholder={placeholder}
         placeholderTextColor={theme.colors.muted}
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"
         inputMode="search"
-        style={[{ flex: 1, minWidth: 0, height: theme.minTouch - 2, padding: 0, fontSize: 16, color: theme.colors.ink }, theme.fonts.regular]}
+        style={[{ flex: 1, minWidth: 0, height: theme.minTouch + 2, padding: 0, fontSize: 16, color: theme.colors.ink }, theme.fonts.regular, bareInput]}
       />
       {value ? (
         <Pressable
@@ -482,17 +562,104 @@ export function SearchField({ value, onChangeText, placeholder, accessibilityLab
           onPress={() => onChangeText('')}
           style={({ pressed }) => ({
             width: theme.minTouch,
-            height: theme.minTouch - 2,
+            height: theme.minTouch,
             alignItems: 'center',
             justifyContent: 'center',
+            borderRadius: theme.radii.field - 1,
+            backgroundColor: pressed ? theme.colors.cloud : 'transparent',
             cursor: 'pointer',
-            opacity: pressed ? 0.6 : 1,
           })}>
           <Icon name="x-mark" color="muted" />
         </Pressable>
       ) : (
         <View style={{ width: 4 }} />
       )}
+    </View>
+  );
+}
+
+export type TextFieldProps = {
+  value: string;
+  onChangeText: (text: string) => void;
+  accessibilityLabel: string;
+  placeholder?: string;
+  /** The keyboard's done key. */
+  onSubmit?: () => void;
+  onBlur?: () => void;
+  autoFocus?: boolean;
+  /** Default 80. */
+  maxLength?: number;
+  /** Default 'sentences'. */
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  /** Error state: a 2 px ink border. Pair it with a message. */
+  invalid?: boolean;
+  /** Tabular numerals (hex codes, numbers). */
+  tabular?: boolean;
+  /** Style of the field's box, e.g. `{ flex: 1 }` in a row. */
+  style?: StyleProp<ViewStyle>;
+  testID?: string;
+};
+
+/** Single-line text input: radius 14, surfaceAlt, 1 px `line` border, papaya focus ring. Same look as SearchField and the hex field. */
+export function TextField({
+  value,
+  onChangeText,
+  accessibilityLabel,
+  placeholder,
+  onSubmit,
+  onBlur,
+  autoFocus,
+  maxLength = 80,
+  autoCapitalize,
+  invalid = false,
+  tabular = false,
+  style,
+  testID,
+}: TextFieldProps) {
+  const theme = useTheme();
+  const [focused, focusHandlers] = useFieldFocus(onBlur);
+  return (
+    <View
+      style={[
+        {
+          minHeight: theme.minTouch + 4,
+          justifyContent: 'center',
+          backgroundColor: theme.colors.surfaceAlt,
+          borderWidth: invalid ? 2 : 1,
+          borderColor: invalid ? theme.colors.ink : theme.colors.line,
+          borderRadius: theme.radii.field,
+        },
+        style,
+      ]}>
+      <TextInput
+        testID={testID}
+        accessibilityLabel={accessibilityLabel}
+        value={value}
+        onChangeText={onChangeText}
+        onSubmitEditing={onSubmit}
+        {...focusHandlers}
+        placeholder={placeholder}
+        placeholderTextColor={theme.colors.muted}
+        autoFocus={autoFocus}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={false}
+        returnKeyType="done"
+        maxLength={maxLength}
+        style={[
+          {
+            minWidth: 0,
+            height: theme.minTouch + 2,
+            paddingHorizontal: invalid ? 13 : 14,
+            paddingVertical: 0,
+            fontSize: 16,
+            color: theme.colors.ink,
+          },
+          tabular ? { fontVariant: ['tabular-nums'] } : null,
+          theme.fonts.regular,
+          bareInput,
+        ]}
+      />
+      <FocusRing visible={focused} />
     </View>
   );
 }

@@ -7,11 +7,16 @@ import { Text, useTheme } from '@/ui';
 import { weaveCopy } from './copy';
 import { GridView, RowPressOverlay, fitCell, useAvailableWidth } from './GridView';
 
-/** Width of the row-number column (2rem in the reference). */
-const LABELS = 32;
+/** Width of the row-number column (fits "120"). */
+const LABELS = 28;
 const GAP = 2;
 /** Room around the rows for the current-row outline. */
 const PAD = 3;
+/**
+ * Inside padding of the `surfaceAlt` well: roomy above and below; at the sides the label column
+ * and PAD give the inset, so 24 warps still fit a 390 pt phone without scrolling.
+ */
+const WELL_PAD = { paddingVertical: 9, paddingHorizontal: 2 } as const;
 
 export type DrawdownProps = {
   stitch: Structure;
@@ -29,8 +34,9 @@ export type DrawdownProps = {
 };
 
 /**
- * The cloth around the current row: 16 rows starting 9 below it, row 1 at the bottom. The
- * current row is outlined, rows already woven are faded, and tapping a row jumps to it.
+ * The cloth around the current row: 16 rows starting 9 below it, row 1 at the bottom, in a
+ * `surfaceAlt` well. The current row is framed in papaya, rows already woven are faded, and
+ * tapping a row jumps to it.
  */
 export function Drawdown({ stitch, setup, warps, colors, currentRow, onJump, windowSize = 16, testID }: DrawdownProps) {
   const theme = useTheme();
@@ -51,39 +57,41 @@ export function Drawdown({ stitch, setup, warps, colors, currentRow, onJump, win
   const yCurrent = end - currentRow;
   const labelSize = Math.min(11.5, cell + 1);
   return (
-    <View onLayout={onLayout} style={{ alignSelf: 'stretch' }}>
-      <ScrollView horizontal contentContainerStyle={{ padding: PAD }}>
-        <View style={{ flexDirection: 'row', width: LABELS + gridWidth, height }}>
-          <View style={{ width: LABELS }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            {Array.from({ length: windowSize }, (_, y) => {
-              const r = end - y;
-              const current = r === currentRow;
-              return (
-                <Text
-                  key={r}
-                  tabular
-                  allowFontScaling={false}
-                  numberOfLines={1}
-                  align="right"
-                  color={current ? 'ink' : 'muted'}
-                  weight={current ? 'bold' : 'regular'}
-                  style={{ position: 'absolute', top: y * pitch, right: 6, left: 0, height: cell, fontSize: labelSize, lineHeight: cell }}>
-                  {r}
-                </Text>
-              );
-            })}
+    <View style={[{ alignSelf: 'stretch' }, WELL_PAD, theme.cards.well]}>
+      <View onLayout={onLayout} style={{ alignSelf: 'stretch' }}>
+        <ScrollView horizontal contentContainerStyle={{ padding: PAD }}>
+          <View style={{ flexDirection: 'row', width: LABELS + gridWidth, height }}>
+            <View style={{ width: LABELS }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              {Array.from({ length: windowSize }, (_, y) => {
+                const r = end - y;
+                const current = r === currentRow;
+                return (
+                  <Text
+                    key={r}
+                    tabular
+                    allowFontScaling={false}
+                    numberOfLines={1}
+                    align="right"
+                    color={current ? 'ink' : 'muted'}
+                    weight={current ? 'semibold' : 'regular'}
+                    style={{ position: 'absolute', top: y * pitch, right: 6, left: 0, height: cell, fontSize: labelSize, lineHeight: cell }}>
+                    {r}
+                  </Text>
+                );
+              })}
+            </View>
+            <GridView testID={testID ? `${testID}-grid` : undefined} cols={warps} rows={windowSize} colorAt={colorAt} cell={cell} gap={GAP} dimRows={dimRows} dimOpacity={0.55} />
+            {yCurrent >= 0 && yCurrent < windowSize ? (
+              <View
+                testID={testID ? `${testID}-current` : undefined}
+                pointerEvents="none"
+                style={{ position: 'absolute', left: -2, right: -2, top: yCurrent * pitch - 2, height: cell + 4, borderWidth: 2, borderColor: theme.colors.papaya, borderRadius: 4 }}
+              />
+            ) : null}
+            <RowPressOverlay testID={testID} rows={windowSize} pitch={pitch} onPressRow={pressRow} currentRow={yCurrent} rowLabel={rowLabel} accessibilityLabel={weaveCopy.drawdownLabel} />
           </View>
-          <GridView testID={testID ? `${testID}-grid` : undefined} cols={warps} rows={windowSize} colorAt={colorAt} cell={cell} gap={GAP} dimRows={dimRows} dimOpacity={0.55} />
-          {yCurrent >= 0 && yCurrent < windowSize ? (
-            <View
-              testID={testID ? `${testID}-current` : undefined}
-              pointerEvents="none"
-              style={{ position: 'absolute', left: -2, right: -2, top: yCurrent * pitch - 2, height: cell + 4, borderWidth: 2, borderColor: theme.colors.mark, borderRadius: 4 }}
-            />
-          ) : null}
-          <RowPressOverlay testID={testID} rows={windowSize} pitch={pitch} onPressRow={pressRow} currentRow={yCurrent} rowLabel={rowLabel} accessibilityLabel={weaveCopy.drawdownLabel} />
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
     </View>
   );
 }

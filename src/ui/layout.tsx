@@ -7,6 +7,7 @@ import {
   Pressable,
   ScrollView,
   View,
+  useWindowDimensions,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -16,8 +17,9 @@ import { Button } from './Button';
 import { uiCopy } from './copy';
 import { Icon, type IconName } from './Icon';
 import { goBackOrHome } from './lazy';
+import { PaperShape, type PaperColor } from './PaperShape';
 import { Text } from './Text';
-import { useTheme } from './theme';
+import { narrowWidth, useTheme } from './theme';
 
 const zeroInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 
@@ -68,7 +70,7 @@ export type ScreenProps = {
    * `footer` should pass ['top', 'bottom'].
    */
   edges?: ScreenEdge[];
-  /** Horizontal 16 and top 20 padding around the content column. Default true. */
+  /** Horizontal 20 (the gutter) and top 8 padding around the content column. Default true. */
   padded?: boolean;
   /** Style for the centred content column (max width 720). */
   contentStyle?: StyleProp<ViewStyle>;
@@ -83,14 +85,18 @@ export function Screen({ children, scroll = false, scrollRef, header, footer, ed
   const bottomInset = edges.includes('bottom') && !footer ? insets.bottom : 0;
   const column: StyleProp<ViewStyle> = [
     { width: '100%', maxWidth: theme.maxContentWidth, alignSelf: 'center' },
-    padded ? { paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.xl } : null,
+    padded ? { paddingHorizontal: theme.spacing.gutter, paddingTop: theme.spacing.sm } : null,
   ];
+  // Under a header, the header's own bottom margin is the gap.
+  const content: StyleProp<ViewStyle> = [column, header && padded ? { paddingTop: 0 } : null];
   return (
     <View
       testID={testID}
       style={{
         flex: 1,
         backgroundColor: theme.colors.bg,
+        // Collage shapes may hang past the column; they never make the page scroll sideways.
+        overflow: 'hidden',
         paddingTop: edges.includes('top') ? insets.top : 0,
         paddingLeft: insets.left,
         paddingRight: insets.right,
@@ -102,10 +108,10 @@ export function Screen({ children, scroll = false, scrollRef, header, footer, ed
           style={{ flex: 1 }}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ paddingBottom: bottomInset + theme.spacing.xl }}>
-          <View style={[column, contentStyle]}>{children}</View>
+          <View style={[content, contentStyle]}>{children}</View>
         </ScrollView>
       ) : (
-        <View style={[column, { flex: 1, paddingBottom: bottomInset }, contentStyle]}>{children}</View>
+        <View style={[content, { flex: 1, paddingBottom: bottomInset }, contentStyle]}>{children}</View>
       )}
       {footer}
     </View>
@@ -114,7 +120,10 @@ export function Screen({ children, scroll = false, scrollRef, header, footer, ed
 
 export type PanelProps = {
   children?: ReactNode;
-  /** 'hero' draws the 2 px ink border of the current-row card. Default 'default'. */
+  /**
+   * 'default' is a card (radius 20, `float` shadow). 'hero' is the current-row card: radius 24,
+   * same shadow. Both get a 1 px `line` border in dark mode only. Default 'default'.
+   */
   variant?: 'default' | 'hero';
   style?: StyleProp<ViewStyle>;
   /** Names the group for screen readers. */
@@ -122,24 +131,21 @@ export type PanelProps = {
   testID?: string;
 };
 
+/** Card padding for the current window: 24, or 20 under 360 px wide. */
+export function useCardPadding(): number {
+  const theme = useTheme();
+  const { width } = useWindowDimensions();
+  return width > 0 && width < narrowWidth ? theme.spacing.cardNarrow : theme.spacing.card;
+}
+
 export function Panel({ children, variant = 'default', style, accessibilityLabel, testID }: PanelProps) {
   const theme = useTheme();
-  const hero = variant === 'hero';
+  const padding = useCardPadding();
   return (
     <View
       testID={testID}
       accessibilityLabel={accessibilityLabel}
-      style={[
-        {
-          backgroundColor: theme.colors.surface,
-          borderColor: hero ? theme.colors.ink : theme.colors.line,
-          borderWidth: hero ? 2 : 1,
-          borderRadius: theme.radii.panel,
-          padding: theme.spacing.lg,
-          marginBottom: theme.spacing.lg,
-        },
-        style,
-      ]}>
+      style={[variant === 'hero' ? theme.cards.hero : theme.cards.card, { padding, marginBottom: theme.spacing.cardGap }, style]}>
       {children}
     </View>
   );
@@ -147,6 +153,8 @@ export function Panel({ children, variant = 'default', style, accessibilityLabel
 
 export type HeaderProps = {
   title: string;
+  /** 'subtitle' draws a smaller serif title (24, e.g. a stitch name). Default 'title' (34). */
+  titleVariant?: 'title' | 'subtitle';
   /** Muted line under the title. */
   subtitle?: string;
   /** Show the back button. Default false, or true when `onBack` is given. */
@@ -163,7 +171,7 @@ export type HeaderProps = {
 /** Width the title keeps before `right` wraps to its own line. */
 const HEADER_TITLE_BASIS = 100;
 
-export function Header({ title, subtitle, back, onBack, backLabel = uiCopy.back, right, testID }: HeaderProps) {
+export function Header({ title, titleVariant = 'title', subtitle, back, onBack, backLabel = uiCopy.back, right, testID }: HeaderProps) {
   const theme = useTheme();
   const showBack = back ?? !!onBack;
   const goBack = () => {
@@ -171,7 +179,7 @@ export function Header({ title, subtitle, back, onBack, backLabel = uiCopy.back,
     else goBackOrHome();
   };
   return (
-    <View testID={testID} style={{ marginBottom: theme.spacing.lg }}>
+    <View testID={testID} style={{ marginBottom: theme.spacing.xl }}>
       {/* Wraps only when the text is zoomed far up on a narrow screen: then `right` drops below. */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: theme.spacing.sm, minHeight: theme.minTouch }}>
         {showBack ? (
@@ -186,15 +194,15 @@ export function Header({ title, subtitle, back, onBack, backLabel = uiCopy.back,
               marginLeft: -10,
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: theme.radii.button,
+              borderRadius: theme.radii.pill,
+              backgroundColor: pressed ? theme.colors.cloud : 'transparent',
               cursor: 'pointer',
-              opacity: pressed ? 0.6 : 1,
             })}>
             <Icon name="chevron-left" size={24} />
           </Pressable>
         ) : null}
         {title ? (
-          <Text variant="title" style={{ flexGrow: 1, flexShrink: 1, flexBasis: HEADER_TITLE_BASIS }}>
+          <Text variant={titleVariant} accessibilityRole="header" style={{ flexGrow: 1, flexShrink: 1, flexBasis: HEADER_TITLE_BASIS, paddingVertical: 2 }}>
             {title}
           </Text>
         ) : (
@@ -229,14 +237,18 @@ export function BottomBar({ left, center, right, testID }: BottomBarProps) {
   return (
     <View
       testID={testID}
-      style={{
-        backgroundColor: theme.colors.surface,
-        borderTopWidth: 1,
-        borderTopColor: theme.colors.line,
-        paddingTop: 10,
-        paddingBottom: 10 + insets.bottom,
-        paddingHorizontal: theme.spacing.lg,
-      }}>
+      style={[
+        {
+          backgroundColor: theme.colors.surface,
+          // Light mode leans on the shadow alone; dark mode also needs the line.
+          borderTopWidth: theme.scheme === 'dark' ? 1 : 0,
+          borderTopColor: theme.colors.line,
+          paddingTop: 12,
+          paddingBottom: 12 + insets.bottom,
+          paddingHorizontal: theme.spacing.gutter,
+        },
+        theme.shadows.bar,
+      ]}>
       <View
         style={{
           width: '100%',
@@ -306,8 +318,17 @@ export function Collapsible({ title, children, defaultOpen = false, open, onTogg
         <Text variant="heading" accessibilityRole="text" style={{ flex: 1 }}>
           {title}
         </Text>
-        <View style={{ transform: [{ rotate: isOpen ? '180deg' : '0deg' }] }}>
-          <Icon name="chevron-down" />
+        <View
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: theme.radii.pill,
+            backgroundColor: theme.colors.surfaceAlt,
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: [{ rotate: isOpen ? '180deg' : '0deg' }],
+          }}>
+          <Icon name="chevron-down" size={18} />
         </View>
       </Pressable>
       {isOpen ? <View style={{ marginTop: theme.spacing.lg }}>{children}</View> : null}
@@ -321,14 +342,23 @@ export type EmptyStateProps = {
   icon?: IconName;
   /** Element under the message, usually a `Button`. */
   action?: ReactNode;
+  /** A torn-paper shape behind the icon. */
+  paper?: PaperColor;
+  /** Picks the shape's edge. Default 3. */
+  paperSeed?: number;
   testID?: string;
 };
 
-export function EmptyState({ title, message, icon, action, testID }: EmptyStateProps) {
+export function EmptyState({ title, message, icon, action, paper, paperSeed = 3, testID }: EmptyStateProps) {
   const theme = useTheme();
   return (
     <View testID={testID} style={{ alignItems: 'center', gap: theme.spacing.sm, paddingVertical: theme.spacing.xxl, paddingHorizontal: theme.spacing.lg }}>
-      {icon ? <Icon name={icon} size={36} color="muted" strokeWidth={1.5} /> : null}
+      {icon || paper ? (
+        <View style={{ width: 112, height: 88, alignItems: 'center', justifyContent: 'center', marginBottom: theme.spacing.xs }}>
+          {paper ? <PaperShape color={paper} seed={paperSeed} width={104} height={80} rotate={-5} dots style={{ top: 4, left: 4 }} /> : null}
+          {icon ? <Icon name={icon} size={36} color={paper ? 'pastelInk' : 'muted'} strokeWidth={1.5} /> : null}
+        </View>
+      ) : null}
       <Text variant="heading" align="center">
         {title}
       </Text>
@@ -379,32 +409,40 @@ export function Sheet({ visible, onClose, title, children, testID }: SheetProps)
           accessibilityRole="button"
           accessibilityLabel={uiCopy.close}
           onPress={onClose}
-          style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(10,13,20,0.5)', cursor: 'auto' }}
+          style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: 'rgba(23,19,15,0.45)', cursor: 'auto' }}
         />
         <View
           testID={testID}
           accessibilityViewIsModal
-          style={{
-            width: '100%',
-            maxWidth: theme.maxContentWidth,
-            maxHeight: '90%',
-            alignSelf: 'center',
-            backgroundColor: theme.colors.surface,
-            borderTopLeftRadius: theme.radii.panel,
-            borderTopRightRadius: theme.radii.panel,
-            borderWidth: 1,
-            borderBottomWidth: 0,
-            borderColor: theme.colors.line,
-            paddingTop: theme.spacing.md,
-            paddingBottom: theme.spacing.lg + insets.bottom,
-          }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: theme.spacing.lg, paddingRight: theme.spacing.sm }}>
+          style={[
+            {
+              width: '100%',
+              maxWidth: theme.maxContentWidth,
+              maxHeight: '90%',
+              alignSelf: 'center',
+              backgroundColor: theme.colors.surface,
+              borderTopLeftRadius: theme.radii.sheet,
+              borderTopRightRadius: theme.radii.sheet,
+              borderWidth: theme.scheme === 'dark' ? 1 : 0,
+              borderBottomWidth: 0,
+              borderColor: theme.colors.line,
+              paddingTop: theme.spacing.sm,
+              paddingBottom: theme.spacing.lg + insets.bottom,
+            },
+            theme.shadows.lift,
+          ]}>
+          <View
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={{ alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: theme.colors.line, marginBottom: theme.spacing.xs }}
+          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingLeft: theme.spacing.card, paddingRight: theme.spacing.md }}>
             <Text variant="heading" style={{ flex: 1 }}>
               {title}
             </Text>
             <Button ref={closeRef} variant="link" icon="x-mark" accessibilityLabel={uiCopy.close} onPress={onClose} />
           </View>
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.sm }}>
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: theme.spacing.card, paddingTop: theme.spacing.sm }}>
             {children}
           </ScrollView>
         </View>

@@ -3,14 +3,14 @@ import { Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'r
 import { useTheme, type ColorToken, type FontWeightName, type TypeVariant } from './theme';
 
 export type TextProps = RNTextProps & {
-  /** Default 'body'. */
+  /** Default 'body'. `display`, `title` and `subtitle` are serif; the rest are sans. */
   variant?: TypeVariant;
   /** Theme token or any colour string. Defaults to the variant's colour. */
   color?: ColorToken | (string & {});
-  /** Overrides the variant's weight. */
+  /** Overrides the variant's face with a sans weight (so it also turns a serif variant sans). */
   weight?: FontWeightName;
   align?: TextStyle['textAlign'];
-  /** Tabular numerals (always on for `rowNumber`). */
+  /** Tabular numerals, for numbers that change in place in a fixed slot. Off by default. */
   tabular?: boolean;
 };
 
@@ -35,7 +35,7 @@ export function Text({ variant = 'body', color, weight, align, tabular, style, .
           letterSpacing: spec.letterSpacing,
           textAlign: align,
         },
-        theme.fonts[weight ?? spec.weight],
+        theme.fonts[weight ?? spec.face],
         (tabular ?? spec.tabular) ? tabularStyle : null,
         style,
       ]}

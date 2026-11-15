@@ -151,8 +151,8 @@ async function main() {
       assert.equal(m.scope, `${BASE}/`);
       assert.equal(m.display, 'standalone');
       assert.equal(m.orientation, 'portrait');
-      assert.equal(m.background_color, '#EEF1EC');
-      assert.equal(m.theme_color, '#EEF1EC');
+      assert.equal(m.background_color, '#FFF3E7');
+      assert.equal(m.theme_color, '#FFF3E7');
       const sizes = (purpose) => m.icons.filter((i) => (i.purpose ?? 'any').split(' ').includes(purpose)).map((i) => i.sizes);
       assert.ok(sizes('any').includes('192x192') && sizes('any').includes('512x512'), 'any-purpose 192 and 512 icons');
       assert.ok(sizes('maskable').includes('512x512'), 'maskable 512 icon');
@@ -171,7 +171,7 @@ async function main() {
         bar: document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.getAttribute('content'),
         viewport: document.querySelector('meta[name="viewport"]')?.getAttribute('content'),
       }));
-      assert.deepEqual(head.themes, ['(prefers-color-scheme: light)=#EEF1EC', '(prefers-color-scheme: dark)=#11151D']);
+      assert.deepEqual(head.themes, ['(prefers-color-scheme: light)=#FFF3E7', '(prefers-color-scheme: dark)=#17130F']);
       assert.equal((await page.request.get(`${origin}${head.touch}`)).status(), 200, 'apple-touch-icon');
       assert.equal(head.capable, 'yes');
       assert.ok(head.bar);

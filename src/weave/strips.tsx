@@ -14,6 +14,8 @@ const THREAD = 0.58;
 const SHADE = 'rgba(0,0,0,0.15)';
 /** Room for a three-digit number centred under the first or last warp. */
 const EDGE_PAD = 6;
+/** Inside padding of the `surfaceAlt` well around a strip: roomy above and below, slim at the sides so warps keep their width. */
+const WELL_PAD = { paddingVertical: 12, paddingHorizontal: 8 } as const;
 
 const StripContext = createContext<number | null>(null);
 
@@ -32,26 +34,36 @@ export type StripScrollerProps = {
   cellMin?: number;
   /** A strip and its `WarpNumbers`; they share one cell width and scroll together. */
   children?: ReactNode;
+  /** Draw the `surfaceAlt` well (radius 14) around the strip. Default true. */
+  well?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 };
 
-/** Sizes the strips inside it to the available width and scrolls them sideways when 10 px warps do not fit. */
-export function StripScroller({ count, cellMin = 10, children, style, testID }: StripScrollerProps) {
+/**
+ * Sizes the strips inside it to the available width and scrolls them sideways when 10 px warps
+ * do not fit. Sits in a `surfaceAlt` well (radius 14) unless `well` is false.
+ */
+export function StripScroller({ count, cellMin = 10, children, well = true, style, testID }: StripScrollerProps) {
+  const theme = useTheme();
   const [width, onLayout] = useAvailableWidth();
   const scrolls = count * cellMin > width;
   const cell = scrolls ? cellMin : width / Math.max(1, count);
+  // Constant padding: the measured width must not depend on whether the strip scrolls.
+  const wellStyle: StyleProp<ViewStyle> = well ? [theme.cards.well, WELL_PAD] : null;
   return (
-    <View onLayout={onLayout} style={[{ alignSelf: 'stretch' }, style]}>
-      <StripContext.Provider value={cell}>
-        {scrolls ? (
-          <ScrollView horizontal testID={testID} contentContainerStyle={{ paddingHorizontal: EDGE_PAD, paddingBottom: 6 }}>
-            <View style={{ width: count * cell }}>{children}</View>
-          </ScrollView>
-        ) : (
-          <View testID={testID}>{children}</View>
-        )}
-      </StripContext.Provider>
+    <View style={[{ alignSelf: 'stretch' }, wellStyle, style]}>
+      <View onLayout={onLayout} style={{ alignSelf: 'stretch' }}>
+        <StripContext.Provider value={cell}>
+          {scrolls ? (
+            <ScrollView horizontal testID={testID} contentContainerStyle={{ paddingHorizontal: EDGE_PAD, paddingBottom: 6 }}>
+              <View style={{ width: count * cell }}>{children}</View>
+            </ScrollView>
+          ) : (
+            <View testID={testID}>{children}</View>
+          )}
+        </StripContext.Provider>
+      </View>
     </View>
   );
 }
@@ -210,7 +222,7 @@ export function WarpNumbers({ count, cellMin = 10, cell: fixed, testID }: WarpNu
   const labels = useMemo(() => warpNumberLabels(count), [count]);
   // Every warp is numbered up to 32, so two-digit numbers sit side by side: keep them apart on narrow cells.
   const tight = count <= 32 && count >= 10 && cell < 16;
-  const fontSize = tight ? 10 : 11;
+  const fontSize = tight ? (cell < 13 ? 9 : 10) : 11;
   return (
     <View
       testID={testID}
@@ -221,8 +233,9 @@ export function WarpNumbers({ count, cellMin = 10, cell: fixed, testID }: WarpNu
       {labels.map((n) => (
         <Text
           key={n}
-          variant="hint"
-          tabular
+          variant="caption"
+          // Proportional digits are narrower ("11" especially) where two-digit numbers sit side by side.
+          tabular={!tight}
           align="center"
           numberOfLines={1}
           maxFontSizeMultiplier={1.2}

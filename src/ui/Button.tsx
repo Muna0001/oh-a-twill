@@ -11,7 +11,10 @@ export type ButtonProps = {
   /** Visible text. Omit for an icon-only button (then `accessibilityLabel` is required). */
   label?: string;
   onPress?: () => void;
-  /** Default 'default' (outlined). 'primary' is filled, 'link' is bare weft-coloured text. */
+  /**
+   * Default 'default' (secondary: radius 14, surface, `line` border). 'primary' is the ink pill
+   * that lifts on hover and press; 'link' is underlined ink text.
+   */
   variant?: ButtonVariant;
   /** Icon before the label. */
   icon?: IconName;
@@ -25,7 +28,7 @@ export type ButtonProps = {
    * `accessibilityRole="radiogroup"` view: `selected` is then reported as `checked`.
    */
   accessibilityRole?: 'button' | 'radio';
-  /** 'lg' is the taller bottom-bar size (48 pt). Default 'md' (44 pt). */
+  /** 'lg' is the bottom-bar size (52 pt). Default 'md' (48 pt primary, 44 pt otherwise). */
   size?: 'md' | 'lg';
   /** Stretch to the container width. */
   fullWidth?: boolean;
@@ -61,10 +64,11 @@ export function Button({
 }: ButtonProps) {
   const theme = useTheme();
   const { colors } = theme;
-  const filled = variant === 'primary' || (variant === 'default' && selected === true);
+  const isPrimary = variant === 'primary';
   const isLink = variant === 'link';
-  const ink = filled ? colors.btnInk : isLink ? colors.weft : colors.ink;
-  const minHeight = size === 'lg' ? 48 : theme.minTouch;
+  const filled = isPrimary || (variant === 'default' && selected === true);
+  const ink = filled ? colors.btnInk : colors.ink;
+  const minHeight = size === 'lg' ? 52 : isPrimary ? 48 : theme.minTouch;
   const iconOnly = !label && !children;
 
   return (
@@ -82,6 +86,7 @@ export function Button({
       testID={testID}
       style={(state) => {
         const { pressed, hovered } = state as WebPressState;
+        const active = !disabled && (pressed || !!hovered);
         return [
           {
             flexDirection: 'row',
@@ -90,28 +95,31 @@ export function Button({
             gap: 6,
             minHeight,
             minWidth: theme.minTouch,
-            borderRadius: theme.radii.button,
+            borderRadius: isPrimary ? theme.radii.pill : theme.radii.button,
             cursor: disabled ? 'auto' : 'pointer',
-            opacity: disabled ? 0.4 : pressed ? 0.7 : 1,
+            opacity: disabled ? 0.4 : 1,
             alignSelf: fullWidth ? 'stretch' : 'flex-start',
             maxWidth: '100%',
           },
           isLink
-            ? { paddingHorizontal: 8, borderRadius: theme.radii.field }
+            ? { paddingHorizontal: 8, backgroundColor: active ? colors.cloud : 'transparent' }
             : {
                 paddingVertical: 8,
-                paddingHorizontal: iconOnly ? 8 : size === 'lg' ? (variant === 'primary' ? 20 : 16) : 13,
+                paddingHorizontal: iconOnly ? 8 : isPrimary ? (size === 'lg' ? 24 : 20) : 14,
                 borderWidth: 1,
-                backgroundColor: filled ? colors.btn : colors.surface,
-                borderColor: filled ? colors.btn : hovered && !disabled ? colors.muted : colors.line,
+                backgroundColor: filled ? colors.btn : active ? colors.cloud : colors.surface,
+                borderColor: filled ? colors.btn : colors.line,
               },
+          // The primary pill lifts on web hover and on press.
+          isPrimary && active ? [theme.shadows.lift, { transform: [{ translateY: pressed ? 0 : -1 }] }] : null,
+          filled && !isPrimary && pressed ? { opacity: 0.85 } : null,
           style,
         ];
       }}>
       {icon ? <Icon name={icon} color={ink} /> : null}
       {label ? (
         // Wraps (rather than cutting the label short) only when the text is zoomed far up.
-        <Text color={ink} weight={filled || isLink ? 'semibold' : 'medium'} align="center" style={{ flexShrink: 1 }}>
+        <Text color={ink} weight={filled || isLink ? 'semibold' : 'medium'} align="center" style={[{ flexShrink: 1 }, isLink ? { textDecorationLine: 'underline' } : null]}>
           {label}
         </Text>
       ) : null}
