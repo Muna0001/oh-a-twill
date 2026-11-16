@@ -3,6 +3,7 @@
 import { readLegacy as readLegacyNative } from './legacyImport';
 import { readLegacy } from './legacyImport.web';
 /* eslint-enable import/no-duplicates */
+import { DEFAULTS } from '@/engine/types';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   jest.requireActual('@react-native-async-storage/async-storage/jest/async-storage-mock'),
@@ -57,16 +58,31 @@ describe('readLegacy (web)', () => {
     expect(s.clear).not.toHaveBeenCalled();
   });
 
-  it('fills in the old defaults for a partial state', () => {
+  it('fills in the defaults for a partial state (today’s default colours)', () => {
     save({ warps: 30, row: 5 });
     expect(readLegacy()).toEqual({
       warps: 30,
-      pattern: { stitchId: 'twill22', setup: { start: 0, mirror: false, side: 'left' }, colors: ['#2E4C8F', '#E4DCC8'], row: 5 },
+      pattern: { stitchId: 'twill22', setup: { start: 0, mirror: false, side: 'left' }, colors: [...DEFAULTS.colors], row: 5 },
       picture: null,
       mode: 'pat',
     });
     save({});
     expect(readLegacy()).toMatchObject({ warps: 24, pattern: { stitchId: 'twill22', row: 1 }, picture: null, mode: 'pat' });
+  });
+
+  it('brings the old app’s untouched default colours over as today’s default, and keeps a chosen pair', () => {
+    save({ colors: ['#2E4C8F', '#E4DCC8'] });
+    expect(readLegacy()!.pattern.colors).toEqual([...DEFAULTS.colors]);
+    save({ colors: ['#2e4c8f', '#e4dcc8'] });
+    expect(readLegacy()!.pattern.colors).toEqual([...DEFAULTS.colors]);
+    for (const colors of [
+      ['#2E4C8F', '#FFFFFF'],
+      ['#c0392b', '#E4DCC8'],
+      ['#E4DCC8', '#2E4C8F'],
+    ]) {
+      save({ colors });
+      expect(readLegacy()!.pattern.colors).toEqual(colors);
+    }
   });
 
   it('accepts every old stitch id and falls back for unknown ones', () => {
@@ -93,7 +109,7 @@ describe('readLegacy (web)', () => {
     });
     expect(readLegacy()).toEqual({
       warps: 120,
-      pattern: { stitchId: 'twill22', setup: { start: 0, mirror: false, side: 'left' }, colors: ['#2E4C8F', '#E4DCC8'], row: 1 },
+      pattern: { stitchId: 'twill22', setup: { start: 0, mirror: false, side: 'left' }, colors: [...DEFAULTS.colors], row: 1 },
       picture: { src: SRC, rows: 4, k: 8, tidy: true, weave: 'twill22', row: 1 },
       mode: 'pic',
     });

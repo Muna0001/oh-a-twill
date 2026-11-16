@@ -257,6 +257,12 @@ for (const { name: browserName, browser } of list) {
         await visibleTestId(page, 'pattern-guide').waitFor();
         assert.equal(await rowLabel(page), 'Row 17');
         assert.equal(await page.evaluate(() => localStorage.getItem('weaving-helper-v3')), saved);
+        // The old helper's untouched default colours come over as today's default (mint on graphite).
+        const colors = await page.evaluate(() => {
+          const { state } = JSON.parse(localStorage.getItem('oh-a-twill/v1/projects'));
+          return Object.values(state.projects).find((p) => p.stitchId === 'herring')?.colors;
+        });
+        assert.deepEqual(colors.map((c) => c.toUpperCase()), ['#9BD8A9', '#41413F']);
         // Answered once: not offered again.
         await page.goto(BASE_URL + '/');
         await card.waitFor();
