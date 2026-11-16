@@ -11,7 +11,10 @@ export interface ConfirmOptions {
 }
 
 export interface DeviceApi {
-  /** A light tap: an impact on phones, nothing on the web. Never throws. */
+  /**
+   * A light tap: an impact on phones; on the mobile web a short vibration (Android) or the
+   * switch-control haptic (iOS 18+). Call it synchronously from the tap's handler. Never throws.
+   */
   tapHaptic: () => void;
   /** Keep the screen on while the calling component is mounted and `enabled` is true. Never throws. */
   useKeepAwake: (enabled: boolean) => void;

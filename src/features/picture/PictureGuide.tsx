@@ -91,11 +91,17 @@ function Guide({ project }: { project: PictureProject }) {
     useProjects.getState().prevRow(id);
     scrollIntoView(cardRef.current, scrollRef.current);
   };
+  /** Arrow keys (desktop): no haptic. */
   const onNext = () => {
     if (!ready || finished) return;
-    if (haptics) tapHaptic();
     useProjects.getState().nextRow(id, H + 1);
     scrollIntoView(cardRef.current, scrollRef.current);
+  };
+  /** The Row done tap: the haptic is played synchronously, inside the tap (the web needs that). */
+  const onPressNext = () => {
+    if (!ready || finished) return;
+    if (haptics) tapHaptic();
+    onNext();
   };
   useRowKeys(onPrev, onNext, useIsFocused());
 
@@ -114,7 +120,7 @@ function Guide({ project }: { project: PictureProject }) {
           ''
         )
       }
-      right={<Button size="lg" variant="primary" trailingIcon="chevron-right" label={copy.rowDone} disabled={!ready || finished} onPress={onNext} testID="picture-next" />}
+      right={<Button size="lg" variant="primary" trailingIcon="chevron-right" label={copy.rowDone} disabled={!ready || finished} onPress={onPressNext} testID="picture-next" />}
     />
   );
 

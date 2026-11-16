@@ -27,6 +27,16 @@ jest.mock('expo-keep-awake', () => ({
   deactivateKeepAwake: jest.fn(() => Promise.resolve()),
 }));
 
+// Capture the ← / → handlers (the native hook is a no-op), to press "keys" in tests.
+const mockKeys: { prev?: () => void; next?: () => void } = {};
+jest.mock('@/platform', () => ({
+  ...jest.requireActual('@/platform'),
+  useRowKeys: (prev: () => void, next: () => void) => {
+    mockKeys.prev = prev;
+    mockKeys.next = next;
+  },
+}));
+
 const hidden = { includeHiddenElements: true };
 
 function create(stitchId = 'twill22', opts: { warps?: number; row?: number; side?: 'left' | 'right' } = {}): string {
@@ -182,6 +192,16 @@ describe('PatternGuide', () => {
     await fireEvent.press(screen.getByText('Row done'));
     expect(mockImpact).toHaveBeenCalledTimes(1);
     expect(mockImpact).toHaveBeenCalledWith('light');
+  });
+
+  it('moves rows with the arrow keys, without a haptic', async () => {
+    const id = create();
+    await render(<PatternGuide projectId={id} />);
+    await act(async () => mockKeys.next!());
+    expect(rowOf(id)).toBe(2);
+    await act(async () => mockKeys.prev!());
+    expect(rowOf(id)).toBe(1);
+    expect(mockImpact).not.toHaveBeenCalled();
   });
 
   it('keeps the screen awake only when the setting is on', async () => {
