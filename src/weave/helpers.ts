@@ -1,5 +1,5 @@
 /** Pure helpers behind the weave components. No React here, so they are cheap to test. */
-import { mod, period, tileRowName, warpKey, weftKey, type PatternSetup, type PatternStats, type Run, type Structure } from '@/engine';
+import { mod, period, tileRowName, warpKey, weftKey, type ColorKey, type PatternSetup, type PatternStats, type Run, type Structure } from '@/engine';
 
 import { weaveCopy } from './copy';
 
@@ -126,4 +126,73 @@ export function mathItems(stats: PatternStats, warps: number, colorWarpLength?: 
       ],
     },
   ];
+}
+
+/** One piece of the colour-order wording: plain text, or a colour name (drawn with its swatch). */
+export type ColorOrderPart = { text: string } | { color: ColorKey };
+
+type Segment = { kind: 'solid' | 'alternate'; start: number; n: number };
+
+/**
+ * Splits a colour order into maximal segments, left to right: a run of one colour, or a strict
+ * alternation (each thread differs from the one before). A run of 2 or more of one colour always
+ * starts a solid segment; otherwise an alternation runs as long as the colours keep switching.
+ */
+export function colorOrderSegments(order: readonly ColorKey[]): Segment[] {
+  const out: Segment[] = [];
+  let i = 0;
+  while (i < order.length) {
+    let j = i + 1;
+    if (j < order.length && order[j] === order[i]) {
+      while (j < order.length && order[j] === order[i]) j++;
+      out.push({ kind: 'solid', start: i, n: j - i });
+    } else if (j < order.length) {
+      while (j < order.length && order[j] !== order[j - 1]) j++;
+      out.push({ kind: 'alternate', start: i, n: j - i });
+    } else {
+      out.push({ kind: 'solid', start: i, n: 1 });
+    }
+    i = j;
+  }
+  return out;
+}
+
+/**
+ * The colour order as grouped wording, in parts so a screen can put a swatch beside each colour
+ * name: "4 Color A, then 4 Color B"; "6 threads alternating Color A and Color B, starting with A,
+ * then …"; a repeat that is one alternation is "Alternate Color A and Color B". Warps say
+ * "threads", wefts say "rows".
+ */
+export function colorOrderParts(order: readonly ColorKey[], kind: 'warp' | 'weft' = 'warp'): ColorOrderPart[] {
+  const c = weaveCopy.colorOrder;
+  const segments = colorOrderSegments(order);
+  const parts: ColorOrderPart[] = [];
+  const other = (k: ColorKey): ColorKey => (k === 0 ? 1 : 0);
+  if (segments.length === 1 && segments[0].kind === 'alternate') {
+    const first = order[0];
+    return [{ text: c.alternate }, { color: first }, { text: c.and }, { color: other(first) }];
+  }
+  segments.forEach((seg, i) => {
+    if (i > 0) parts.push({ text: c.then });
+    const first = order[seg.start];
+    if (seg.kind === 'solid') {
+      parts.push({ text: `${seg.n} ` }, { color: first });
+    } else {
+      parts.push(
+        { text: `${seg.n} ${c.unit(kind, seg.n)}${c.alternating}` },
+        { color: first },
+        { text: c.and },
+        { color: other(first) },
+        { text: c.startingWith(first) },
+      );
+    }
+  });
+  return parts;
+}
+
+/** `colorOrderParts` as one plain sentence (no full stop), e.g. "4 Color A, then 4 Color B". */
+export function describeColorOrder(order: readonly ColorKey[], kind: 'warp' | 'weft' = 'warp'): string {
+  return colorOrderParts(order, kind)
+    .map((p) => ('text' in p ? p.text : weaveCopy.colorName(p.color)))
+    .join('');
 }

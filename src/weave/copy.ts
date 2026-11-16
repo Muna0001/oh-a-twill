@@ -72,4 +72,16 @@ export const weaveCopy = {
   },
 
   repeatRowNumber: (n: number): string => `${n}.`,
+
+  colorOrder: {
+    /** Unit for a run of the colour order. */
+    unit: (kind: 'warp' | 'weft', n: number): string => (kind === 'warp' ? (n === 1 ? 'thread' : 'threads') : n === 1 ? 'row' : 'rows'),
+    then: ', then ',
+    alternating: ' alternating ',
+    and: ' and ',
+    startingWith: (k: ColorKey): string => `, starting with ${k === 0 ? 'A' : 'B'}`,
+    alternate: 'Alternate ',
+    repeatWarp: 'Repeat across the warp.',
+    repeatWeft: 'Repeat up the cloth.',
+  },
 } as const;

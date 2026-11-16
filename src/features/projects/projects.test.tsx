@@ -56,7 +56,24 @@ describe('fit hint', () => {
   it('shows houndstooth’s 8-warp repeat and its warp order', async () => {
     await render(<ProjectSetupScreen stitchId="hounds" />);
     expect(screen.getByText('3 repeats of 8, clean edges')).toBeTruthy();
-    expect(screen.getByText('Wind the warp in this order, then repeat: 4 Color A, 4 Color B.')).toBeTruthy();
+    expect(screen.getByText('Wind the warp')).toBeTruthy();
+    expect(screen.getByLabelText('4 Color A, then 4 Color B. Repeat across the warp.')).toBeTruthy();
+    expect(screen.getByLabelText('4 Color A, then 4 Color B. Repeat up the cloth.')).toBeTruthy();
+  });
+
+  it('shows log cabin’s warp order grouped, not as a list of runs', async () => {
+    await render(<ProjectSetupScreen stitchId="logcabin" />);
+    expect(
+      screen.getByLabelText(
+        '6 threads alternating Color A and Color B, starting with A, then 6 threads alternating Color B and Color A, starting with B. Repeat across the warp.',
+      ),
+    ).toBeTruthy();
+  });
+
+  it('shows no color order for a one-color stitch', async () => {
+    await render(<ProjectSetupScreen stitchId="twill22" />);
+    expect(screen.queryByTestId('setup-warp-order')).toBeNull();
+    expect(screen.queryByTestId('setup-weft-order')).toBeNull();
   });
 });
 

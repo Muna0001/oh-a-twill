@@ -6,15 +6,13 @@ import { TilePreview } from '@/weave';
 
 import { libraryCopy } from './copy';
 
-/** 1–3 filled dots out of 3, announced as "Difficulty n of 3". */
-export function DifficultyDots({ level, size = 7, testID }: { level: number; size?: number; testID?: string }) {
+/** 1–3 filled dots out of 3. Decorative: `Difficulty` carries the words. */
+export function DifficultyDots({ level, size = 7 }: { level: number; size?: number }) {
   const theme = useTheme();
   return (
     <View
-      testID={testID}
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={libraryCopy.difficulty(level)}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
       style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
       {[1, 2, 3].map((n) => (
         <View
@@ -33,6 +31,23 @@ export function DifficultyDots({ level, size = 7, testID }: { level: number; siz
   );
 }
 
+/** "Difficulty ●●○ Intermediate", announced as "Difficulty: Intermediate, 2 of 3". */
+export function Difficulty({ level, testID }: { level: number; testID?: string }) {
+  const theme = useTheme();
+  return (
+    <View
+      testID={testID}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={libraryCopy.difficulty(level)}
+      style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: theme.spacing.sm, rowGap: 2 }}>
+      <Text variant="label">{libraryCopy.difficultyLabel}</Text>
+      <DifficultyDots level={level} size={9} />
+      <Text weight="medium">{libraryCopy.difficultyName(level)}</Text>
+    </View>
+  );
+}
+
 export type StitchCardProps = {
   stitch: Stitch;
   colors: readonly [string, string];
@@ -41,7 +56,7 @@ export type StitchCardProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-/** One library card: woven preview, name, two-line description, difficulty, favourite heart. */
+/** One library card: woven preview, name, two-line description, favourite heart. */
 export function StitchCard({ stitch, colors, favourite, onPress, style }: StitchCardProps) {
   const theme = useTheme();
   return (
@@ -61,7 +76,7 @@ export function StitchCard({ stitch, colors, favourite, onPress, style }: Stitch
         ];
       }}>
       <TilePreview stitch={stitch} colors={colors} cols={12} rows={10} style={{ borderRadius: theme.radii.field }} />
-      <View style={{ gap: 2, flex: 1, paddingHorizontal: theme.spacing.xs }}>
+      <View style={{ gap: 2, flex: 1, paddingHorizontal: theme.spacing.xs, paddingBottom: theme.spacing.xs }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Text weight="semibold" numberOfLines={1} style={{ flex: 1 }}>
             {stitch.name}
@@ -71,9 +86,6 @@ export function StitchCard({ stitch, colors, favourite, onPress, style }: Stitch
         <Text variant="hint" numberOfLines={2}>
           {stitch.desc}
         </Text>
-      </View>
-      <View style={{ paddingHorizontal: theme.spacing.xs, paddingBottom: theme.spacing.xs }}>
-        <DifficultyDots level={stitch.difficulty} />
       </View>
     </Pressable>
   );

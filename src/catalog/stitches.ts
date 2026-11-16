@@ -237,9 +237,9 @@ export const STITCHES: Stitch[] = [
     category: 'color',
     difficulty: 3,
     desc: 'Plain weave with alternating colors that switch every 6 threads, making blocks of lines.',
-    goodFor: 'Blocks of vertical and horizontal lines from nothing but plain weave.',
+    goodFor: 'Blocks of vertical and horizontal lines from nothing but plain weave and two colors, used in both the warp and the weft.',
     tips: [
-      'Wind the warp one thread at a time, alternating colors. After every 6 threads, repeat the last color once, so two threads of the same color sit side by side.',
+      'It uses two colors in both the warp and the weft. The warp’s color order is what makes the blocks: wind it one thread at a time, alternating colors, and after every 6 threads repeat the last color once, so two threads of the same color sit side by side.',
       'The weft follows the same color order as the warp, one row per thread.',
       'The over and under is plain weave. The pattern comes only from the color order, so check the color before each row.',
       'The repeat is 12 warps and 12 rows. Use a warp count that divides by 12.',

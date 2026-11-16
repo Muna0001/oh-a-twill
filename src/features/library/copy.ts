@@ -19,7 +19,9 @@ export const libraryCopy = {
 
   // Cards
   cardLabel: (name: string, desc: string) => `${name}. ${desc}`,
-  difficulty: (n: number) => `Difficulty ${n} of 3`,
+  difficultyLabel: 'Difficulty',
+  difficultyName: (n: number) => (n <= 1 ? 'Beginner' : n === 2 ? 'Intermediate' : 'Advanced'),
+  difficulty: (n: number) => `Difficulty: ${n <= 1 ? 'Beginner' : n === 2 ? 'Intermediate' : 'Advanced'}, ${n} of 3`,
   favorite: 'Favorite',
 
   // Continue
@@ -53,9 +55,15 @@ export const libraryCopy = {
   previewLabel: (name: string, face: 'front' | 'back') => `Woven preview of ${name}, ${face === 'front' ? 'front' : 'back'}`,
   alsoCalled: (aliases: string[]) => `Also called ${aliases.join(', ')}`,
   goodFor: 'Good for',
-  colorOrderTitle: 'Color order',
-  warpOrder: (order: string) => `Wind the warp in this order, then repeat: ${order}.`,
-  weftOrder: (order: string) => `Weave the weft in this order, then repeat: ${order}.`,
+  /** Both the warp and the weft use both colors. */
+  twoColorsTitle: 'Two colors',
+  /** Only one of them does. */
+  colorsTitle: 'Colors',
+  colorsBoth: 'This pattern uses Color A and Color B in both the warp and the weft.',
+  colorsWarpOnly: 'This pattern uses Color A and Color B in the warp. The weft is all Color A.',
+  colorsWeftOnly: 'This pattern uses Color A and Color B in the weft. The warp is all Color B.',
+  windWarp: 'Wind the warp',
+  weaveWeft: 'Weave the weft',
   repeatTitle: 'The repeat',
   mathTitle: 'The math',
   warpThreads: 'Warp threads',

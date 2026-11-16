@@ -89,7 +89,8 @@ describe('LibraryScreen', () => {
     await render(<LibraryScreen />);
     const card = screen.getByTestId('stitch-card-twill22');
     expect(card.props.accessibilityLabel).toBe('2/2 twill. Over 2, under 2, shifting one warp each row to make a diagonal.');
-    expect(within(card).getByLabelText('Difficulty 1 of 3')).toBeTruthy();
+    // The overview has no difficulty dots.
+    expect(within(card).queryByLabelText(/Difficulty/)).toBeNull();
     await fireEvent.press(card);
     expect(router.push).toHaveBeenCalledWith('/stitch/twill22');
   });
@@ -204,15 +205,38 @@ describe('StitchDetailScreen', () => {
     expect(screen.getByLabelText('1. Over 2, under 2')).toBeTruthy();
     expect(screen.getByText('The math')).toBeTruthy();
     expect(screen.getByText('Tips')).toBeTruthy();
-    expect(screen.getByLabelText('Difficulty 1 of 3')).toBeTruthy();
+    expect(screen.getByLabelText('Difficulty: Beginner, 1 of 3')).toBeTruthy();
+    expect(screen.getByText('Beginner')).toBeTruthy();
     expect(screen.queryByTestId('color-order')).toBeNull();
   });
 
   it('shows the warp winding order for houndstooth', async () => {
     await render(<StitchDetailScreen id="hounds" />);
-    expect(screen.getByText('Wind the warp in this order, then repeat: 4 Color A, 4 Color B.')).toBeTruthy();
-    expect(screen.getByText('Weave the weft in this order, then repeat: 4 Color A, 4 Color B.')).toBeTruthy();
-    expect(screen.getAllByText(/4 Color A, 4 Color B/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Two colors')).toBeTruthy();
+    expect(screen.getByText('This pattern uses Color A and Color B in both the warp and the weft.')).toBeTruthy();
+    expect(screen.getByText('Wind the warp')).toBeTruthy();
+    expect(screen.getByText('Weave the weft')).toBeTruthy();
+    expect(screen.getByLabelText('4 Color A, then 4 Color B. Repeat across the warp.')).toBeTruthy();
+    expect(screen.getByLabelText('4 Color A, then 4 Color B. Repeat up the cloth.')).toBeTruthy();
+    expect(screen.getByLabelText('Difficulty: Intermediate, 2 of 3')).toBeTruthy();
+  });
+
+  it('groups log cabin’s color order and labels its difficulty', async () => {
+    await render(<StitchDetailScreen id="logcabin" />);
+    expect(
+      screen.getByLabelText(
+        '6 rows alternating Color A and Color B, starting with A, then 6 rows alternating Color B and Color A, starting with B. Repeat up the cloth.',
+      ),
+    ).toBeTruthy();
+    expect(screen.getByLabelText('Difficulty: Advanced, 3 of 3')).toBeTruthy();
+  });
+
+  it('says only the weft uses both colors for weft stripes', async () => {
+    await render(<StitchDetailScreen id="weftstripes" />);
+    expect(screen.getByText('Colors')).toBeTruthy();
+    expect(screen.getByText('This pattern uses Color A and Color B in the weft. The warp is all Color B.')).toBeTruthy();
+    expect(screen.queryByTestId('color-order-warp')).toBeNull();
+    expect(screen.getByLabelText('2 Color A, then 2 Color B. Repeat up the cloth.')).toBeTruthy();
   });
 
   it('starts weaving with the stitch id', async () => {
