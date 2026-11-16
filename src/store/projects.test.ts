@@ -5,6 +5,7 @@ import { DEFAULTS } from '@/engine/types';
 import {
   configureProjectFiles,
   PROJECTS_KEY,
+  PROJECTS_VERSION,
   rehydrateStores,
   resetStoresForTests,
   useProjects,
@@ -458,7 +459,7 @@ describe('persistence', () => {
     const id = P().createPattern({ stitchId: 'plain', name: 'Plain weave' });
     await flush();
     const saved = JSON.parse((await AsyncStorage.getItem(PROJECTS_KEY))!);
-    expect(saved.version).toBe(1);
+    expect(saved.version).toBe(PROJECTS_VERSION);
     expect(saved.state.order).toEqual([id]);
     expect(saved.state.projects[id].name).toBe('Plain weave');
     expect(Object.keys(saved.state).sort()).toEqual(['lastOpenedId', 'order', 'projects']);
@@ -525,13 +526,71 @@ describe('persistence', () => {
     );
     await rehydrateStores();
     expect(P().order).toEqual(['new', 'old']);
-    expect(P().projects.old).toMatchObject({ name: 'Old', row: 3 });
+    expect(P().projects.old).toMatchObject({ name: 'Old', row: 3, colors: [...DEFAULTS.colors] });
     expect(P().lastOpenedId).toBe('old');
     await flush();
     const saved = JSON.parse((await AsyncStorage.getItem(PROJECTS_KEY))!);
-    expect(saved.version).toBe(1);
+    expect(saved.version).toBe(PROJECTS_VERSION);
     expect(Array.isArray(saved.state.projects)).toBe(false);
     expect(saved.state.order).toEqual(['new', 'old']);
+  });
+
+  it('v1 → v2: only pattern projects on the untouched old default colours get the new default', async () => {
+    const pat = (id: string, colors: unknown, updatedAt: number) => ({
+      id, kind: 'pattern', name: id, warps: 24, row: 5, stitchId: 'twill22',
+      setup: { start: 0, mirror: false, side: 'left' }, colors, createdAt: 1, updatedAt,
+    });
+    const pic = { id: 'pic', kind: 'picture', name: 'Picture 1', warps: 24, row: 2, imageUri: null, imageW: 0, imageH: 0, rows: 0, k: 4, tidy: true, weave: 'twill22', createdAt: 1, updatedAt: 50 };
+    const stored = {
+      projects: {
+        oldDefault: pat('oldDefault', ['#2E4C8F', '#E4DCC8'], 10),
+        lowerCase: pat('lowerCase', ['#2e4c8f', '#e4dcc8'], 20),
+        custom: pat('custom', ['#c0392b', '#f4efe2'], 30),
+        onlyA: pat('onlyA', ['#c0392b', '#E4DCC8'], 40),
+        onlyB: pat('onlyB', ['#2E4C8F', '#ffffff'], 45),
+        swapped: pat('swapped', ['#E4DCC8', '#2E4C8F'], 5),
+        pic,
+      },
+      // Deliberately not newest-first: migration must not reorder.
+      order: ['oldDefault', 'custom', 'pic', 'lowerCase', 'onlyA', 'onlyB', 'swapped'],
+      lastOpenedId: 'oldDefault',
+    };
+    await AsyncStorage.setItem(PROJECTS_KEY, JSON.stringify({ version: 1, state: stored }));
+    await rehydrateStores();
+
+    expect(pattern('oldDefault').colors).toEqual([...DEFAULTS.colors]);
+    expect(pattern('lowerCase').colors).toEqual([...DEFAULTS.colors]);
+    expect(pattern('custom').colors).toEqual(['#c0392b', '#f4efe2']);
+    expect(pattern('onlyA').colors).toEqual(['#c0392b', '#E4DCC8']);
+    expect(pattern('onlyB').colors).toEqual(['#2E4C8F', '#ffffff']);
+    expect(pattern('swapped').colors).toEqual(['#E4DCC8', '#2E4C8F']);
+    expect(picture('pic')).toEqual(pic);
+    expect(P().order).toEqual(stored.order);
+    expect(P().lastOpenedId).toBe('oldDefault');
+    for (const [id, p] of Object.entries(stored.projects)) expect(P().projects[id].updatedAt).toBe(p.updatedAt);
+
+    await flush();
+    const saved = JSON.parse((await AsyncStorage.getItem(PROJECTS_KEY))!);
+    expect(saved.version).toBe(PROJECTS_VERSION);
+    expect(saved.state.projects.oldDefault.colors).toEqual([...DEFAULTS.colors]);
+  });
+
+  it('v2: the old pair chosen again by the person is kept', async () => {
+    await AsyncStorage.setItem(
+      PROJECTS_KEY,
+      JSON.stringify({
+        version: 2,
+        state: {
+          projects: {
+            a: { id: 'a', kind: 'pattern', name: 'A', warps: 24, row: 1, stitchId: 'twill22', setup: { start: 0, mirror: false, side: 'left' }, colors: ['#2E4C8F', '#E4DCC8'], createdAt: 1, updatedAt: 2 },
+          },
+          order: ['a'],
+          lastOpenedId: null,
+        },
+      }),
+    );
+    await rehydrateStores();
+    expect(pattern('a').colors).toEqual(['#2E4C8F', '#E4DCC8']);
   });
 
   it('starts empty when the saved state is not JSON', async () => {

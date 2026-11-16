@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware';
 import { DEFAULTS } from '@/engine/types';
 
 import { setStoreHydrated } from './hydration';
-import { LEGACY_DEFAULT_COLORS } from './legacy';
+import { isLegacyDefaultColors } from './legacy';
 import { jsonStorage, SETTINGS_KEY } from './storage';
 import type { Settings } from './types';
 import { cleanBool, cleanColors, cleanSide, cleanStringList, clampWarps, isRecord } from './validate';
@@ -67,12 +67,7 @@ export function migrateSettings(persisted: unknown, version: number): SettingsDa
     delete state.favorites;
   }
   if (version < 2) {
-    const c = state.defaultColors;
-    if (
-      Array.isArray(c) &&
-      c.length === 2 &&
-      c.every((v, i) => typeof v === 'string' && v.toUpperCase() === LEGACY_DEFAULT_COLORS[i])
-    ) {
+    if (isLegacyDefaultColors(state.defaultColors)) {
       state.defaultColors = [DEFAULTS.colors[0], DEFAULTS.colors[1]];
     }
   }

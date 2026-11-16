@@ -13,6 +13,20 @@ export const LEGACY_KEY = 'weaving-helper-v3';
 /** The old web app's default yarn colours (indigo on natural), also this app's defaults before settings v2. */
 export const LEGACY_DEFAULT_COLORS = ['#2E4C8F', '#E4DCC8'] as const;
 
+/** True for exactly the old default pair, in that order, any letter case: the person never changed it. */
+export function isLegacyDefaultColors(c: unknown): boolean {
+  return (
+    Array.isArray(c) &&
+    c.length === 2 &&
+    c.every((v, i) => typeof v === 'string' && v.toUpperCase() === LEGACY_DEFAULT_COLORS[i])
+  );
+}
+
+/** Colours for a project or setting: the untouched old default pair becomes today's default; any other pair is kept. */
+export function upgradeDefaultColors(c: [string, string]): [string, string] {
+  return isLegacyDefaultColors(c) ? [DEFAULTS.colors[0], DEFAULTS.colors[1]] : c;
+}
+
 /** Every pattern id the old web app could have saved. */
 export const LEGACY_STITCH_IDS = [
   'plain',
@@ -72,7 +86,8 @@ export function normalizeLegacy(raw: unknown): LegacyData | null {
     pattern: {
       stitchId,
       setup: cleanSetup({ start: raw.start, mirror: raw.mirror, side: raw.side }),
-      colors: cleanColors(raw.colors, LEGACY_DEFAULT_COLORS),
+      // The old app's untouched default (or no valid pair) comes over as today's default; a chosen pair is kept.
+      colors: upgradeDefaultColors(cleanColors(raw.colors)),
       row: clampRow(raw.row),
     },
     picture,

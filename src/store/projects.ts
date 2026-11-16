@@ -8,6 +8,7 @@ import type { PatternSetup, PicWeave } from '@/engine/types';
 import { copy } from './copy';
 import { setStoreHydrated } from './hydration';
 import { useSettings } from './settings';
+import { isLegacyDefaultColors } from './legacy';
 import { jsonStorage, PROJECTS_KEY } from './storage';
 import type { PatternProject, PictureProject, Project } from './types';
 import {
@@ -24,7 +25,7 @@ import {
   isRecord,
 } from './validate';
 
-export const PROJECTS_VERSION = 1;
+export const PROJECTS_VERSION = 2;
 
 /* ---------- File hooks (injected, so the store has no file-system import) ---------- */
 
@@ -237,6 +238,9 @@ export function sanitizeProjects(raw: unknown): ProjectsData {
 /**
  * Reshape older saved state into the current shape. Validation happens in `merge`.
  * v0 (pre-release builds) kept projects as an array and had no `order`.
+ * v1 → v2: the default yarn colours changed. A pattern project still on the untouched old
+ * default pair (exactly, in order, any case) gets the new default; any other pair was chosen
+ * and stays. Picture projects, `updatedAt` and the order are not touched.
  */
 export function migrateProjects(persisted: unknown, version: number): ProjectsData {
   const state: Record<string, unknown> = isRecord(persisted) ? { ...persisted } : {};
@@ -247,6 +251,15 @@ export function migrateProjects(persisted: unknown, version: number): ProjectsDa
     }
     state.projects = byId;
     delete state.order;
+  }
+  if (version < 2 && isRecord(state.projects)) {
+    const projects: Record<string, unknown> = { ...state.projects };
+    for (const [id, p] of Object.entries(projects)) {
+      if (isRecord(p) && p.kind === 'pattern' && isLegacyDefaultColors(p.colors)) {
+        projects[id] = { ...p, colors: [DEFAULTS.colors[0], DEFAULTS.colors[1]] };
+      }
+    }
+    state.projects = projects;
   }
   return state as unknown as ProjectsData;
 }
