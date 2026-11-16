@@ -75,7 +75,7 @@ export const copy = {
     defaultColors: 'Yarn colors',
     weaving: 'While weaving',
     haptics: 'Vibrate when a row is done',
-    hapticsHint: 'Phones only.',
+    hapticsHint: 'Light taps on Row done, on phones (iPhone needs iOS 18 or later).',
     keepAwake: 'Keep the screen awake while weaving',
     theme: 'Appearance',
     system: 'System',

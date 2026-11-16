@@ -104,11 +104,17 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
     [info.weftKey, colors, updatePattern, id],
   );
 
+  /** Arrow keys (desktop): no haptic. */
   const goNext = useCallback(() => {
     nextRow(id);
-    if (haptics) tapHaptic();
     scrollIntoView(cardRef.current, scrollRef.current);
-  }, [nextRow, id, haptics]);
+  }, [nextRow, id]);
+
+  /** The Row done tap: the haptic is played synchronously, inside the tap (the web needs that). */
+  const pressNext = useCallback(() => {
+    if (haptics) tapHaptic();
+    goNext();
+  }, [haptics, goNext]);
 
   const goPrev = useCallback(() => {
     if (row <= 1) return;
@@ -158,7 +164,7 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
       testID="guide-bar"
       left={<Button size="lg" icon="chevron-left" label={copy.back} accessibilityLabel={copy.previousRow} disabled={row <= 1} onPress={goPrev} testID="guide-prev" />}
       center={copy.row(row)}
-      right={<Button size="lg" variant="primary" label={copy.rowDone} trailingIcon="chevron-right" onPress={goNext} testID="guide-next" />}
+      right={<Button size="lg" variant="primary" label={copy.rowDone} trailingIcon="chevron-right" onPress={pressNext} testID="guide-next" />}
     />
   );
 

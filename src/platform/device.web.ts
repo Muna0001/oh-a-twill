@@ -1,10 +1,11 @@
-/** Web: Wake Lock API, arrow keys, `window.confirm`. Haptics are a no-op. */
+/** Web: Wake Lock API, arrow keys, `window.confirm`, and haptics where a phone browser allows (see haptics.web.ts). */
 import { useEffect } from 'react';
 
+import { tapHapticWeb } from './haptics.web';
 import { rowKeyFor } from './keys';
 import type { DeviceApi } from './types';
 
-export const tapHaptic: DeviceApi['tapHaptic'] = () => {};
+export const tapHaptic: DeviceApi['tapHaptic'] = () => tapHapticWeb();
 
 type WakeLockLike = { released?: boolean; release: () => Promise<void> };
 type WakeLockApi = { request: (type: 'screen') => Promise<WakeLockLike> };
