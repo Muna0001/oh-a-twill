@@ -2,14 +2,14 @@ import { router } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { View } from 'react-native';
 
-import { CATEGORIES, getStitch, warpOrderText, weftOrderText } from '@/catalog';
+import { CATEGORIES, getStitch } from '@/catalog';
 import { DEFAULTS, repWidth, stats, type Stitch } from '@/engine';
 import { useSettings } from '@/store';
 import { BottomBar, Button, EmptyState, Header, Icon, Panel, Screen, Segmented, Stepper, Text, useTheme } from '@/ui';
-import { MathPanel, RepeatList, TilePreview } from '@/weave';
+import { ColorOrder, MathPanel, RepeatList, TilePreview } from '@/weave';
 
 import { libraryCopy as copy } from './copy';
-import { DifficultyDots } from './parts';
+import { Difficulty } from './parts';
 
 type Face = 'front' | 'back';
 
@@ -63,6 +63,33 @@ function Section({ title, children, testID }: { title: string; children: ReactNo
   );
 }
 
+/** "Two colors": how a colour-and-weave stitch uses Color A and Color B, warp and weft, one repeat each. */
+function ColorsPanel({ stitch, colors }: { stitch: Stitch; colors: readonly [string, string] }) {
+  const theme = useTheme();
+  const { warp, weft } = stitch;
+  if (!warp && !weft) return null;
+  const both = !!warp && !!weft;
+  return (
+    <Section title={both ? copy.twoColorsTitle : copy.colorsTitle} testID="color-order">
+      <View style={{ gap: theme.spacing.xl }}>
+        <Text>{both ? copy.colorsBoth : warp ? copy.colorsWarpOnly : copy.colorsWeftOnly}</Text>
+        {warp ? (
+          <View style={{ gap: theme.spacing.sm }}>
+            <Text variant="label">{copy.windWarp}</Text>
+            <ColorOrder order={warp} colors={colors} kind="warp" testID="color-order-warp" />
+          </View>
+        ) : null}
+        {weft ? (
+          <View style={{ gap: theme.spacing.sm }}>
+            <Text variant="label">{copy.weaveWeft}</Text>
+            <ColorOrder order={weft} colors={colors} kind="weft" testID="color-order-weft" />
+          </View>
+        ) : null}
+      </View>
+    </Section>
+  );
+}
+
 function StitchDetail({ stitch }: { stitch: Stitch }) {
   const theme = useTheme();
   const colors = useSettings((s) => s.defaultColors);
@@ -72,8 +99,6 @@ function StitchDetail({ stitch }: { stitch: Stitch }) {
 
   const rep = repWidth(stitch);
   const math = useMemo(() => stats(stitch, DEFAULTS.setup, warps), [stitch, warps]);
-  const warpOrder = warpOrderText(stitch);
-  const weftOrder = weftOrderText(stitch);
 
   return (
     <Screen
@@ -113,21 +138,14 @@ function StitchDetail({ stitch }: { stitch: Stitch }) {
       <View style={{ gap: theme.spacing.md, marginBottom: theme.spacing.xl }}>
         {stitch.aliases.length > 0 ? <Text color="muted">{copy.alsoCalled(stitch.aliases)}</Text> : null}
         <Text>{stitch.desc}</Text>
-        <DifficultyDots level={stitch.difficulty} size={9} testID="detail-difficulty" />
+        <Difficulty level={stitch.difficulty} testID="detail-difficulty" />
         <View>
           <Text variant="label">{copy.goodFor}</Text>
           <Text>{stitch.goodFor}</Text>
         </View>
       </View>
 
-      {warpOrder || weftOrder ? (
-        <Section title={copy.colorOrderTitle} testID="color-order">
-          <View style={{ gap: theme.spacing.sm }}>
-            {warpOrder ? <Text>{copy.warpOrder(warpOrder)}</Text> : null}
-            {weftOrder ? <Text>{copy.weftOrder(weftOrder)}</Text> : null}
-          </View>
-        </Section>
-      ) : null}
+      <ColorsPanel stitch={stitch} colors={colors} />
 
       <Section title={copy.repeatTitle}>
         <RepeatList stitch={stitch} setup={DEFAULTS.setup} colors={colors} />

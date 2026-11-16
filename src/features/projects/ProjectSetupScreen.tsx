@@ -3,10 +3,10 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { tileRowName, type PatternSetup, type Side, type Stitch } from '@/engine';
-import { getStitch, warpOrderText } from '@/catalog';
+import { getStitch } from '@/catalog';
 import { useProject, useProjects, useSettings, type PatternProject } from '@/store';
 import { BottomBar, Button, Chip, ColorField, EmptyState, Header, Panel, Screen, Segmented, Stepper, Text, TextField, useTheme } from '@/ui';
-import { TilePreview } from '@/weave';
+import { ColorOrder, TilePreview } from '@/weave';
 
 import { copy } from './copy';
 import { backOr, fitHint } from './helpers';
@@ -173,7 +173,6 @@ function SetupForm({ title, stitch, values, onChange, name, onName, onNameCommit
   const theme = useTheme();
   const { warps, setup, colors } = values;
   const tileRows = stitch.tile.length;
-  const windOrder = warpOrderText(stitch);
 
   return (
     <Screen
@@ -235,11 +234,23 @@ function SetupForm({ title, stitch, values, onChange, name, onName, onNameCommit
           </Field>
         ) : null}
 
-        <Field label={copy.setup.yarnColors} hint={windOrder ? copy.setup.windOrder(windOrder) : undefined}>
+        <Field label={copy.setup.yarnColors}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.xl }}>
             <ColorField label={copy.setup.colorA} value={colors[0]} onChange={(hex) => onChange({ colors: [hex, colors[1]] })} />
             <ColorField label={copy.setup.colorB} value={colors[1]} onChange={(hex) => onChange({ colors: [colors[0], hex] })} />
           </View>
+          {stitch.warp ? (
+            <View style={{ gap: theme.spacing.sm, marginTop: theme.spacing.sm }}>
+              <Text variant="label">{copy.setup.windWarp}</Text>
+              <ColorOrder order={stitch.warp} colors={colors} kind="warp" testID="setup-warp-order" />
+            </View>
+          ) : null}
+          {stitch.weft ? (
+            <View style={{ gap: theme.spacing.sm, marginTop: theme.spacing.sm }}>
+              <Text variant="label">{copy.setup.weaveWeft}</Text>
+              <ColorOrder order={stitch.weft} colors={colors} kind="weft" testID="setup-weft-order" />
+            </View>
+          ) : null}
         </Field>
 
         <Field label={copy.setup.direction}>

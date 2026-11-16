@@ -1,6 +1,6 @@
 import { TWILL, stats, threaded, type ColorKey, type PatternSetup, type Structure } from '@/engine';
 
-import { mathItems, mathText, mergeRuns, repeatLabels, repeatRowLabels, warpColorsFor, warpNumberLabels } from './helpers';
+import { colorOrderSegments, describeColorOrder, mathItems, mathText, mergeRuns, repeatLabels, repeatRowLabels, warpColorsFor, warpNumberLabels } from './helpers';
 
 const A: ColorKey = 0;
 const B: ColorKey = 1;
@@ -128,5 +128,39 @@ describe('mathItems', () => {
     expect(warp[3]).toBe('Warp shows more on the side facing you. Weft is on top about 33% of the time.');
     const one = mathItems({ ...base, remainder: 0, nearestCleanWarps: [], weftPct: 50 }, 4).map(mathText);
     expect(one[1]).toBe('4 ÷ 4 = 1 full repeat, nothing left over. Both edges finish cleanly.');
+  });
+});
+
+describe('describeColorOrder', () => {
+  it('houndstooth: two solid blocks', () => {
+    expect(describeColorOrder([A, A, A, A, B, B, B, B])).toBe('4 Color A, then 4 Color B');
+  });
+
+  it('log cabin: two alternations of 6, the second starting with B', () => {
+    const logcabin: ColorKey[] = [A, B, A, B, A, B, B, A, B, A, B, A];
+    expect(colorOrderSegments(logcabin)).toEqual([
+      { kind: 'alternate', start: 0, n: 6 },
+      { kind: 'alternate', start: 6, n: 6 },
+    ]);
+    expect(describeColorOrder(logcabin)).toBe(
+      '6 threads alternating Color A and Color B, starting with A, then 6 threads alternating Color B and Color A, starting with B',
+    );
+    expect(describeColorOrder(logcabin, 'weft')).toBe(
+      '6 rows alternating Color A and Color B, starting with A, then 6 rows alternating Color B and Color A, starting with B',
+    );
+  });
+
+  it('hairline: a repeat that is one alternation reads as "Alternate"', () => {
+    expect(describeColorOrder([A, B])).toBe('Alternate Color A and Color B');
+    expect(describeColorOrder([B, A], 'weft')).toBe('Alternate Color B and Color A');
+  });
+
+  it('weft stripes: two solid pairs', () => {
+    expect(describeColorOrder([A, A, B, B], 'weft')).toBe('2 Color A, then 2 Color B');
+  });
+
+  it('mixes solid runs and alternations, and ends on a single thread', () => {
+    expect(describeColorOrder([A, A, B, A, B, B])).toBe('2 Color A, then 3 threads alternating Color B and Color A, starting with B, then 1 Color B');
+    expect(describeColorOrder([A])).toBe('1 Color A');
   });
 });

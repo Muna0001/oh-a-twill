@@ -6,16 +6,17 @@ import { TilePreview } from '@/weave';
 
 import { libraryCopy } from './copy';
 
-/** 1–3 filled dots out of 3, announced as "Difficulty n of 3". */
-export function DifficultyDots({ level, size = 7, testID }: { level: number; size?: number; testID?: string }) {
+/**
+ * 1–3 filled dots out of 3. On a library card they stand alone, announced as "Difficulty n of 3";
+ * with `decorative` (inside `Difficulty`) they are hidden and the words carry the meaning.
+ */
+export function DifficultyDots({ level, size = 7, decorative = false, testID }: { level: number; size?: number; decorative?: boolean; testID?: string }) {
   const theme = useTheme();
+  const a11y = decorative
+    ? ({ accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' } as const)
+    : ({ accessible: true, accessibilityRole: 'image', accessibilityLabel: libraryCopy.difficultyDots(level) } as const);
   return (
-    <View
-      testID={testID}
-      accessible
-      accessibilityRole="image"
-      accessibilityLabel={libraryCopy.difficulty(level)}
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+    <View testID={testID} {...a11y} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
       {[1, 2, 3].map((n) => (
         <View
           key={n}
@@ -33,6 +34,23 @@ export function DifficultyDots({ level, size = 7, testID }: { level: number; siz
   );
 }
 
+/** "Difficulty ●●○ Intermediate", announced as "Difficulty: Intermediate, 2 of 3". */
+export function Difficulty({ level, testID }: { level: number; testID?: string }) {
+  const theme = useTheme();
+  return (
+    <View
+      testID={testID}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={libraryCopy.difficulty(level)}
+      style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: theme.spacing.sm, rowGap: 2 }}>
+      <Text variant="label">{libraryCopy.difficultyLabel}</Text>
+      <DifficultyDots level={level} size={9} decorative />
+      <Text weight="medium">{libraryCopy.difficultyName(level)}</Text>
+    </View>
+  );
+}
+
 export type StitchCardProps = {
   stitch: Stitch;
   colors: readonly [string, string];
@@ -41,7 +59,7 @@ export type StitchCardProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-/** One library card: woven preview, name, two-line description, difficulty, favourite heart. */
+/** One library card: woven preview, name, two-line description, difficulty dots, favourite heart. */
 export function StitchCard({ stitch, colors, favourite, onPress, style }: StitchCardProps) {
   const theme = useTheme();
   return (

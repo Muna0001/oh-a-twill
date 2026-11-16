@@ -28,8 +28,12 @@ export { Drawdown, type DrawdownProps } from './Drawdown';
 export { PicturePreview, type PicturePreviewProps } from './PicturePreview';
 export { MathPanel, type MathPanelProps } from './MathPanel';
 export { RepeatList, type RepeatListProps } from './RepeatList';
+export { ColorOrder, type ColorOrderProps } from './ColorOrder';
 export { WeaveGallery } from './WeaveGallery';
 export {
+  colorOrderParts,
+  colorOrderSegments,
+  describeColorOrder,
   mergeRuns,
   mathItems,
   mathText,
@@ -38,6 +42,7 @@ export {
   stepsSentence,
   warpColorsFor,
   warpNumberLabels,
+  type ColorOrderPart,
   type ColorRun,
   type MathItem,
   type MathPart,
