@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
 import type { PaletteColor } from '@/engine';
 import type { BuildPictureParams, BuiltPicture } from '@/media';
-import { resetStoresForTests, useProjects, type PictureProject } from '@/store';
+import { resetStoresForTests, useProjects, useSettings, type PictureProject } from '@/store';
 
 import { pictureCopy } from './copy';
 import { PictureGuide } from './PictureGuide';
@@ -26,6 +26,17 @@ jest.mock('@/media', () => {
     thumbnailSource: jest.fn((uri: string) => Promise.resolve(`thumb:${uri}`)),
   };
 });
+
+// The haptic and the ← / → handlers, to check that only the Row done tap plays the haptic.
+const mockHaptic = jest.fn();
+const mockKeys: { next?: () => void } = {};
+jest.mock('@/platform', () => ({
+  ...jest.requireActual('@/platform'),
+  tapHaptic: () => mockHaptic(),
+  useRowKeys: (_prev: () => void, next: () => void) => {
+    mockKeys.next = next;
+  },
+}));
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const media = require('@/media') as {
@@ -202,6 +213,24 @@ describe('PictureGuide', () => {
     expect(project(id).row).toBe(5);
     await fireEvent.press(screen.getByTestId('picture-prev'));
     expect(project(id).row).toBe(4);
+  });
+
+  it('plays the haptic on the Row done tap only, and only when the setting is on', async () => {
+    mockHaptic.mockClear();
+    const id = seed();
+    await render(<PictureGuide projectId={id} />);
+    await settle();
+    await fireEvent.press(screen.getByTestId('picture-next'));
+    expect(project(id).row).toBe(2);
+    expect(mockHaptic).toHaveBeenCalledTimes(1);
+    // Arrow keys move the row without a haptic.
+    await act(async () => mockKeys.next!());
+    expect(project(id).row).toBe(3);
+    expect(mockHaptic).toHaveBeenCalledTimes(1);
+    await act(async () => useSettings.getState().set({ haptics: false }));
+    await fireEvent.press(screen.getByTestId('picture-next'));
+    expect(project(id).row).toBe(4);
+    expect(mockHaptic).toHaveBeenCalledTimes(1);
   });
 
   it('clamps the row when the picture gets shorter', async () => {
