@@ -89,8 +89,7 @@ describe('LibraryScreen', () => {
     await render(<LibraryScreen />);
     const card = screen.getByTestId('stitch-card-twill22');
     expect(card.props.accessibilityLabel).toBe('2/2 twill. Over 2, under 2, shifting one warp each row to make a diagonal.');
-    // The overview has no difficulty dots.
-    expect(within(card).queryByLabelText(/Difficulty/)).toBeNull();
+    expect(within(card).getByLabelText('Difficulty 1 of 3')).toBeTruthy();
     await fireEvent.press(card);
     expect(router.push).toHaveBeenCalledWith('/stitch/twill22');
   });

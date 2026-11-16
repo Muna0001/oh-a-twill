@@ -19,6 +19,8 @@ export const libraryCopy = {
 
   // Cards
   cardLabel: (name: string, desc: string) => `${name}. ${desc}`,
+  /** The library card's dots. */
+  difficultyDots: (n: number) => `Difficulty ${n} of 3`,
   difficultyLabel: 'Difficulty',
   difficultyName: (n: number) => (n <= 1 ? 'Beginner' : n === 2 ? 'Intermediate' : 'Advanced'),
   difficulty: (n: number) => `Difficulty: ${n <= 1 ? 'Beginner' : n === 2 ? 'Intermediate' : 'Advanced'}, ${n} of 3`,
