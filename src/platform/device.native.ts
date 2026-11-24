@@ -40,6 +40,9 @@ export const useKeepAwake: DeviceApi['useKeepAwake'] = (enabled) => {
   }, [enabled]);
 };
 
+/** Phones play the haptic from `tapHaptic`; the overlay is a web (iOS Safari) thing. */
+export const useHapticTrigger: DeviceApi['useHapticTrigger'] = () => {};
+
 /** No hardware keyboard handling on phones. */
 export const useRowKeys: DeviceApi['useRowKeys'] = () => {};
 
