@@ -6,6 +6,7 @@
 import type { DeviceApi } from './types';
 
 export declare const tapHaptic: DeviceApi['tapHaptic'];
+export declare const useHapticTrigger: DeviceApi['useHapticTrigger'];
 export declare const useKeepAwake: DeviceApi['useKeepAwake'];
 export declare const useRowKeys: DeviceApi['useRowKeys'];
 export declare const confirmAsync: DeviceApi['confirmAsync'];

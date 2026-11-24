@@ -12,10 +12,17 @@ export interface ConfirmOptions {
 
 export interface DeviceApi {
   /**
-   * A light tap: an impact on phones; on the mobile web a short vibration (Android) or the
-   * switch-control haptic (iOS 18+). Call it synchronously from the tap's handler. Never throws.
+   * A light tap: an impact on phones, a 10 ms vibration in Android browsers. Call it
+   * synchronously from the tap's handler. Does nothing on iOS Safari (see `useHapticTrigger`)
+   * and on desktops. Never throws.
    */
   tapHaptic: () => void;
+  /**
+   * iOS Safari only: while `enabled`, lays a transparent haptic trigger over the button behind
+   * `ref` (its host view), so the person's own tap plays the system haptic. Pair it with
+   * `tapHaptic` on the same button. Does nothing elsewhere. Never throws.
+   */
+  useHapticTrigger: (ref: { readonly current: unknown }, enabled: boolean) => void;
   /** Keep the screen on while the calling component is mounted and `enabled` is true. Never throws. */
   useKeepAwake: (enabled: boolean) => void;
   /** ← calls `onPrev`, → calls `onNext` (web only; not while typing). Default enabled. */

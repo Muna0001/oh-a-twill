@@ -4,7 +4,7 @@ import { Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 
 import { getStitch } from '@/catalog';
 import { period, rowInfo, stats, type Stitch } from '@/engine';
-import { confirmAsync, scrollIntoView, tapHaptic, useKeepAwake, useRowKeys } from '@/platform';
+import { confirmAsync, scrollIntoView, tapHaptic, useHapticTrigger, useKeepAwake, useRowKeys } from '@/platform';
 import { useHydrated, useProject, useProjects, useSettings, type PatternProject } from '@/store';
 import { BottomBar, Button, Collapsible, ColorField, EmptyState, Header, Icon, Panel, Screen, Text, useTheme } from '@/ui';
 import {
@@ -85,6 +85,7 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
   const { width } = useWindowDimensions();
   const focused = useIsFocused();
   const cardRef = useRef<ComponentRef<typeof View>>(null);
+  const rowDoneRef = useRef<ComponentRef<typeof Pressable>>(null);
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
 
   const info = useMemo(() => rowInfo(stitch, setup, warps, row), [stitch, setup, warps, row]);
@@ -139,6 +140,8 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
 
   useKeepAwake(keepAwake);
   useRowKeys(goPrev, goNext, focused);
+  // iOS Safari plays its haptic from the person's own tap on Row done (Android and phones use tapHaptic).
+  useHapticTrigger(rowDoneRef, haptics);
 
   const header = (
     <Header
@@ -164,7 +167,7 @@ function Guide({ project, stitch }: { project: PatternProject; stitch: Stitch })
       testID="guide-bar"
       left={<Button size="lg" icon="chevron-left" label={copy.back} accessibilityLabel={copy.previousRow} disabled={row <= 1} onPress={goPrev} testID="guide-prev" />}
       center={copy.row(row)}
-      right={<Button size="lg" variant="primary" label={copy.rowDone} trailingIcon="chevron-right" onPress={pressNext} testID="guide-next" />}
+      right={<Button size="lg" variant="primary" label={copy.rowDone} trailingIcon="chevron-right" onPress={pressNext} ref={rowDoneRef} testID="guide-next" />}
     />
   );
 

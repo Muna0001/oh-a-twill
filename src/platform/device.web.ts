@@ -1,11 +1,35 @@
 /** Web: Wake Lock API, arrow keys, `window.confirm`, and haptics where a phone browser allows (see haptics.web.ts). */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
-import { tapHapticWeb } from './haptics.web';
+import { attachHapticTriggerIfSupported, tapHapticWeb } from './haptics.web';
 import { rowKeyFor } from './keys';
 import type { DeviceApi } from './types';
 
 export const tapHaptic: DeviceApi['tapHaptic'] = () => tapHapticWeb();
+
+/**
+ * iOS / iPadOS: keeps the haptic overlay (see haptics.web.ts) on the button behind `ref` while
+ * `enabled`. Checked after every render, so a remounted button gets it again; removed when
+ * disabled or unmounted.
+ */
+export const useHapticTrigger: DeviceApi['useHapticTrigger'] = (ref, enabled) => {
+  const attached = useRef<{ node: unknown; detach: () => void } | null>(null);
+  useEffect(() => {
+    const node = enabled ? ref.current : null;
+    if (attached.current?.node === node) return;
+    attached.current?.detach();
+    attached.current = null;
+    const detach = node ? attachHapticTriggerIfSupported(node) : null;
+    if (detach) attached.current = { node, detach };
+  });
+  useEffect(
+    () => () => {
+      attached.current?.detach();
+      attached.current = null;
+    },
+    [],
+  );
+};
 
 type WakeLockLike = { released?: boolean; release: () => Promise<void> };
 type WakeLockApi = { request: (type: 'screen') => Promise<WakeLockLike> };

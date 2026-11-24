@@ -1,10 +1,10 @@
 import { router, useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useRef, useState, type ComponentRef } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 
 import { importPictureFile, messageFor, pickPicture, type PickedPicture, type PickSource } from '@/media';
 import { useProject, useProjects, useSettings, type PicturePatch, type PictureProject } from '@/store';
-import { scrollIntoView, tapHaptic, useKeepAwake, useRowKeys } from '@/platform';
+import { scrollIntoView, tapHaptic, useHapticTrigger, useKeepAwake, useRowKeys } from '@/platform';
 import { BottomBar, Button, Chip, EmptyState, Header, Panel, Screen, Stepper, Text, useTheme } from '@/ui';
 import { LIMITS } from '@/engine';
 import { PicturePreview } from '@/weave';
@@ -48,6 +48,7 @@ function Guide({ project }: { project: PictureProject }) {
   const [picking, setPicking] = useState(false);
   const cardRef = useRef<ComponentRef<typeof View>>(null);
   const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
+  const rowDoneRef = useRef<ComponentRef<typeof Pressable>>(null);
 
   useEffect(() => {
     useProjects.getState().open(id);
@@ -104,6 +105,8 @@ function Guide({ project }: { project: PictureProject }) {
     onNext();
   };
   useRowKeys(onPrev, onNext, useIsFocused());
+  // iOS Safari plays its haptic from the person's own tap on Row done (Android and phones use tapHaptic).
+  useHapticTrigger(rowDoneRef, haptics && ready && !finished);
 
   const footer = (
     <BottomBar
@@ -120,7 +123,7 @@ function Guide({ project }: { project: PictureProject }) {
           ''
         )
       }
-      right={<Button size="lg" variant="primary" trailingIcon="chevron-right" label={copy.rowDone} disabled={!ready || finished} onPress={onPressNext} testID="picture-next" />}
+      right={<Button size="lg" variant="primary" trailingIcon="chevron-right" label={copy.rowDone} disabled={!ready || finished} onPress={onPressNext} ref={rowDoneRef} testID="picture-next" />}
     />
   );
 
